@@ -241,6 +241,27 @@
   #toast.warn { background:#c02010; }
   #toast.show { opacity:.95; }
 
+  /* --- 設定 --- */
+  #btn-settings-title {
+    position:absolute; top:14px; right:14px;
+  }
+  #screen-settings {
+    background: rgba(0,0,0,.55);
+    display:flex; align-items:center; justify-content:center; z-index:200;
+  }
+  #settings-box {
+    width: 300px; background:#fdf6e0; border:5px ridge #c0a060; border-radius:10px;
+    text-align:center; padding: 18px 26px 24px; color:#443;
+  }
+  #settings-box h2 { margin:0 0 16px; font-size:24px; letter-spacing:6px; color:#8a5a20; }
+  .srow {
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:16px; margin-bottom:12px; padding:0 6px;
+  }
+  .srow button.flashbtn { width:80px; font-size:14px; padding:4px 0; letter-spacing:1px; }
+  .srow button.flashbtn.on { background: linear-gradient(#fff0b0, #f0c040 45%, #d8a020 55%, #f0d060); color:#503800; }
+  .srow button.flashbtn.off { color:#999; }
+
   /* --- リザルト --- */
   #screen-result {
     background: rgba(0,0,0,.6);
@@ -275,6 +296,7 @@
     </div>
     <div id="diff-label">― 難易度をえらんでスタート ―</div>
     <div id="diff-btns"></div>
+    <button id="btn-settings-title" class="flashbtn small">⚙ 設定</button>
   </div>
 
   <!-- ============ プレイ ============ -->
@@ -290,6 +312,7 @@
           <div id="gauge-text">0%</div>
         </div>
       </div>
+      <button id="btn-settings-play" class="flashbtn small">⚙</button>
       <button id="btn-quit" class="flashbtn small">タイトルへ</button>
     </div>
     <div id="playarea">
@@ -314,6 +337,16 @@
       </div>
     </div>
     <div id="toast"></div>
+  </div>
+
+  <!-- ============ 設定 ============ -->
+  <div id="screen-settings" class="screen hidden">
+    <div id="settings-box">
+      <h2>設定</h2>
+      <div class="srow"><span>BGM</span><button id="tgl-bgm" class="flashbtn"></button></div>
+      <div class="srow"><span>効果音</span><button id="tgl-se" class="flashbtn"></button></div>
+      <button id="btn-settings-close" class="flashbtn small" style="margin-top:6px;">閉じる</button>
+    </div>
   </div>
 
   <!-- ============ リザルト ============ -->
@@ -350,6 +383,9 @@ const CONFIG = {
 
   SMOKER_RATE: 0.22,       // 喫煙者を含むグループの割合
   CHILD_RATE:  0.18,       // 子どもを含むグループの割合
+
+  BGM_SRC: "bgm.mp3",      // BGMファイル（index.htmlと同じフォルダに置く）
+  BGM_VOLUME: 0.45,        // BGM音量（0〜1）
 
   // 難易度（総組数）
   DIFFICULTIES: [
@@ -405,6 +441,37 @@ const TABLE_LAYOUT = [
 ];
 
 /* ==============================================================
+ * 設定（localStorageに保存）
+ * ============================================================== */
+const SETTINGS = { bgm: true, se: true };
+try {
+  Object.assign(SETTINGS, JSON.parse(localStorage.getItem("osekiSettings") || "{}"));
+} catch (e) {}
+function saveSettings() {
+  try { localStorage.setItem("osekiSettings", JSON.stringify(SETTINGS)); } catch (e) {}
+}
+
+/* ==============================================================
+ * BGM
+ * ============================================================== */
+const bgmEl = new Audio();
+bgmEl.loop = true;
+bgmEl.preload = "auto";
+let userGestured = false; // 自動再生制限対策：初回操作後にのみ再生
+function updateBGM() {
+  if (SETTINGS.bgm && userGestured) {
+    if (!bgmEl.src) bgmEl.src = CONFIG.BGM_SRC;
+    bgmEl.volume = CONFIG.BGM_VOLUME;
+    bgmEl.play().catch(() => {});
+  } else {
+    bgmEl.pause();
+  }
+}
+document.addEventListener("pointerdown", () => {
+  if (!userGestured) { userGestured = true; initAudio(); updateBGM(); }
+});
+
+/* ==============================================================
  * サウンド（Web Audio API 簡易ビープ）
  * ============================================================== */
 let audioCtx = null;
@@ -415,7 +482,7 @@ function initAudio() {
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 }
 function beep(freq, dur, delay, type, vol) {
-  if (!audioCtx) return;
+  if (!SETTINGS.se || !audioCtx) return;
   const t = audioCtx.currentTime + (delay || 0);
   const osc = audioCtx.createOscillator();
   const g = audioCtx.createGain();
@@ -787,6 +854,31 @@ $("btn-pass").addEventListener("click", onPassClick);
 const toTitle = () => { G.state = "title"; showScreen("title"); };
 $("btn-to-title").addEventListener("click", toTitle);
 $("btn-quit").addEventListener("click", toTitle);
+
+// ---- 設定モーダル ----
+function renderSettingsUI() {
+  for (const [id, key] of [["tgl-bgm", "bgm"], ["tgl-se", "se"]]) {
+    const btn = $(id);
+    btn.textContent = SETTINGS[key] ? "ON" : "OFF";
+    btn.className = "flashbtn " + (SETTINGS[key] ? "on" : "off");
+  }
+}
+function toggleSetting(key) {
+  SETTINGS[key] = !SETTINGS[key];
+  saveSettings();
+  renderSettingsUI();
+  if (key === "bgm") updateBGM();
+  if (key === "se" && SETTINGS.se) { initAudio(); SFX.seat(); } // 確認音
+}
+$("tgl-bgm").addEventListener("click", () => toggleSetting("bgm"));
+$("tgl-se").addEventListener("click", () => toggleSetting("se"));
+const openSettings = () => { renderSettingsUI(); $("screen-settings").classList.remove("hidden"); };
+$("btn-settings-title").addEventListener("click", openSettings);
+$("btn-settings-play").addEventListener("click", openSettings);
+$("btn-settings-close").addEventListener("click", () => $("screen-settings").classList.add("hidden"));
+$("screen-settings").addEventListener("click", (e) => {
+  if (e.target.id === "screen-settings") $("screen-settings").classList.add("hidden");
+});
 </script>
 </body>
 </html>
