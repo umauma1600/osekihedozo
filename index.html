@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>お席へどうぞ！ 〜レストラン案内係〜</title>
 <style>
   /* ===== 2005年頃のFlashゲームポータル風 ===== */
@@ -10,10 +11,14 @@
     background: #3a3a3a;
     font-family: "MS PGothic", "ＭＳ Ｐゴシック", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
     -webkit-user-select: none; user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   #stage-wrap {
-    width: 800px; margin: 24px auto;
+    width: 812px; margin: 12px auto 0;
   }
+  #game-scale { overflow: hidden; }
+  #game { transform-origin: top left; }
   #game {
     position: relative;
     width: 800px; height: 600px;
@@ -24,6 +29,12 @@
     cursor: default;
   }
   .credit { text-align:center; color:#888; font-size:11px; margin-top:6px; }
+  #rotate-hint {
+    display:none; text-align:center; color:#ffd080; font-size:13px; padding:8px 12px;
+  }
+  @media (max-width: 700px) and (orientation: portrait) {
+    #rotate-hint { display:block; }
+  }
 
   /* ===== 画面共通 ===== */
   .screen { position:absolute; inset:0; }
@@ -285,6 +296,7 @@
 </head>
 <body>
 <div id="stage-wrap">
+<div id="game-scale">
 <div id="game">
 
   <!-- ============ タイトル ============ -->
@@ -373,7 +385,9 @@
   </div>
 
 </div>
-<div class="credit">© 2026 お席へどうぞ！ — マウスだけで遊べます ／ アイコン素材：<a href="https://icooon-mono.com/" style="color:#aaa">ICOOON MONO</a></div>
+</div>
+<div id="rotate-hint">📱 スマホは横向きにすると大きく表示されます</div>
+<div class="credit">© 2026 お席へどうぞ！ — マウス／タップで遊べます ／ アイコン素材：<a href="https://icooon-mono.com/" style="color:#aaa">ICOOON MONO</a></div>
 </div>
 
 <script>
@@ -489,6 +503,30 @@ function updateBGM() {
 document.addEventListener("pointerdown", () => {
   if (!userGestured) { userGestured = true; initAudio(); updateBGM(); }
 });
+
+/* ==============================================================
+ * スマホ対応：画面サイズに合わせて盤面全体を縮小表示
+ * （ゲーム本体は800×600固定のままscaleでフィットさせる）
+ * ============================================================== */
+function fitGame() {
+  const BASE_W = 812, BASE_H = 612; // 枠線6px×2を含む実寸
+  const margin = 8;
+  const scale = Math.min(
+    1,
+    (window.innerWidth - margin) / BASE_W,
+    (window.innerHeight - margin) / BASE_H
+  );
+  const game = document.getElementById("game");
+  const scaler = document.getElementById("game-scale");
+  const wrap = document.getElementById("stage-wrap");
+  game.style.transform = scale < 1 ? `scale(${scale})` : "";
+  scaler.style.width = Math.round(BASE_W * scale) + "px";
+  scaler.style.height = Math.round(BASE_H * scale) + "px";
+  wrap.style.width = Math.round(BASE_W * scale) + "px";
+}
+window.addEventListener("resize", fitGame);
+window.addEventListener("orientationchange", fitGame);
+fitGame();
 
 /* ==============================================================
  * サウンド（Web Audio API 簡易ビープ）
