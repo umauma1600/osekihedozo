@@ -360,9 +360,9 @@ const CONFIG = {
   ],
 };
 
-// 属性ベースの統一カラー（一般＝青 / 喫煙希望＝茶 / 子ども＝オレンジ）
-const COLORS = { normal: "#3570c8", smoker: "#8a5a2a", child: "#e89020" };
-const groupColor = (g) => (g.hasSmoker ? COLORS.smoker : COLORS.normal);
+// 属性ベースの統一カラー（グループ全員が同じ色：一般＝黒 / 子連れ＝緑 / 喫煙＝赤）
+const COLORS = { normal: "#2b2b2b", child: "#2f9e44", smoker: "#d63030" };
+const groupColor = (g) => (g.hasChild ? COLORS.child : g.hasSmoker ? COLORS.smoker : COLORS.normal);
 
 /* ==============================================================
  * テーブルレイアウト（ドトール風カフェ）
@@ -542,7 +542,7 @@ function renderQueue() {
     let icons = "";
     const adults = g.remaining - (g.hasChild && !g.childPlaced ? 1 : 0);
     for (let k = 0; k < adults; k++) icons += personSVG(groupColor(g));
-    if (g.hasChild && !g.childPlaced) icons += childSVG(COLORS.child);
+    if (g.hasChild && !g.childPlaced) icons += childSVG(groupColor(g));
     if (g.hasSmoker) icons += smokeSVG();
     card.innerHTML =
       `<div class="gno">${g.no}</div>` +
@@ -589,11 +589,11 @@ function renderTable(t) {
   }
   html += `<div class="occ">`;
   for (const p of t.parties) {
-    const color = p.hasSmoker ? COLORS.smoker : COLORS.normal;
+    const color = p.childGroup ? COLORS.child : p.hasSmoker ? COLORS.smoker : COLORS.normal;
     html += `<span class="party">`;
     const adults = p.size - (p.hasChild ? 1 : 0);
     for (let i = 0; i < adults; i++) html += personSVG(color, true);
-    if (p.hasChild) html += childSVG(COLORS.child);
+    if (p.hasChild) html += childSVG(color);
     html += `<span class="remain-chip">あと${p.remain}</span></span>`;
   }
   html += `</div>`;
@@ -658,6 +658,7 @@ function onTableClick(t) {
     groupId: g.no,
     size: n,
     hasSmoker: g.hasSmoker,
+    childGroup: g.hasChild,
     hasChild: withChild,
     remain: randInt(CONFIG.STAY_MIN_TURNS, CONFIG.STAY_MAX_TURNS),
     justSeated: true,
@@ -780,8 +781,8 @@ for (const diff of CONFIG.DIFFICULTIES) {
 }
 $("legend").innerHTML =
   `<span class="li">${personSVG(COLORS.normal, true)}一般</span>` +
-  `<span class="li">${personSVG(COLORS.smoker, true)}喫煙希望</span>` +
-  `<span class="li">${childSVG(COLORS.child)}子ども</span>`;
+  `<span class="li">${personSVG(COLORS.child, true)}子連れ</span>` +
+  `<span class="li">${personSVG(COLORS.smoker, true)}喫煙</span>`;
 $("btn-pass").addEventListener("click", onPassClick);
 const toTitle = () => { G.state = "title"; showScreen("title"); };
 $("btn-to-title").addEventListener("click", toTitle);
