@@ -203,6 +203,20 @@
     font-size:9px; line-height:12px; padding:0 3px; border-radius:6px;
     background:#403020; color:#ffe080; margin-left:1px;
   }
+  /* 相席時にグループの区切りが分かるよう、組ごとに枠で囲む */
+  .party {
+    display:inline-flex; align-items:flex-end; gap:1px;
+    background:rgba(255,255,255,.35); border:1px solid rgba(60,40,20,.45);
+    border-radius:5px; padding:1px 2px; margin:1px;
+  }
+
+  /* --- 凡例 --- */
+  #legend {
+    border-top:2px dashed #a08860; padding:4px 4px 3px;
+    display:flex; justify-content:center; gap:8px;
+    font-size:9px; color:#553;
+  }
+  #legend .li { display:flex; align-items:flex-end; gap:2px; }
 
   .table.ok {
     border-color:#20c020;
@@ -283,6 +297,7 @@
         <div id="queue-head">来店リスト</div>
         <div id="queue-sub">残り <span id="ui-remain">0</span> 組</div>
         <div id="queue-list"></div>
+        <div id="legend"></div>
         <div id="btn-pass-wrap">
           <button id="btn-pass" class="flashbtn small">待機する</button>
           <div class="note">1ターン経過（不満 +2）</div>
@@ -345,8 +360,9 @@ const CONFIG = {
   ],
 };
 
-// グループ識別色（相席の見分け用）
-const GROUP_COLORS = ["#3070d0","#d04030","#309040","#9040b0","#d08020","#158080","#c03080","#607020"];
+// 属性ベースの統一カラー（一般＝青 / 喫煙希望＝茶 / 子ども＝オレンジ）
+const COLORS = { normal: "#3570c8", smoker: "#8a5a2a", child: "#e89020" };
+const groupColor = (g) => (g.hasSmoker ? COLORS.smoker : COLORS.normal);
 
 /* ==============================================================
  * テーブルレイアウト（ドトール風カフェ）
@@ -510,7 +526,7 @@ function makeLineup(count) {
       remaining: size,
       hasChild,
       hasSmoker,
-      color: GROUP_COLORS[i % GROUP_COLORS.length],
+      childPlaced: false,
     });
   }
   return lineup;
@@ -524,9 +540,9 @@ function renderQueue() {
     const card = document.createElement("div");
     card.className = "gcard" + (i === G.headIndex ? " current" : "");
     let icons = "";
-    const adults = g.remaining - (g.hasChild ? 1 : 0);
-    for (let k = 0; k < adults; k++) icons += personSVG(g.color);
-    if (g.hasChild) icons += childSVG(g.color);
+    const adults = g.remaining - (g.hasChild && !g.childPlaced ? 1 : 0);
+    for (let k = 0; k < adults; k++) icons += personSVG(groupColor(g));
+    if (g.hasChild && !g.childPlaced) icons += childSVG(COLORS.child);
     if (g.hasSmoker) icons += smokeSVG();
     card.innerHTML =
       `<div class="gno">${g.no}</div>` +
@@ -573,8 +589,12 @@ function renderTable(t) {
   }
   html += `<div class="occ">`;
   for (const p of t.parties) {
-    for (let i = 0; i < p.size; i++) html += personSVG(p.color, true);
-    html += `<span class="remain-chip">あと${p.remain}</span>`;
+    const color = p.hasSmoker ? COLORS.smoker : COLORS.normal;
+    html += `<span class="party">`;
+    const adults = p.size - (p.hasChild ? 1 : 0);
+    for (let i = 0; i < adults; i++) html += personSVG(color, true);
+    if (p.hasChild) html += childSVG(COLORS.child);
+    html += `<span class="remain-chip">あと${p.remain}</span></span>`;
   }
   html += `</div>`;
   t.el.innerHTML = html;
@@ -631,11 +651,14 @@ function onTableClick(t) {
   }
   if (G.state !== "play") return; // ペナルティでゲームオーバーした場合
 
-  // 着席（滞在ターン数はランダム）
+  // 着席（滞在ターン数はランダム）。子どもは最初に着席する一団に含める
+  const withChild = g.hasChild && !g.childPlaced && t.area !== "sm" && t.type !== "counter";
+  if (withChild) g.childPlaced = true;
   t.parties.push({
     groupId: g.no,
     size: n,
-    color: g.color,
+    hasSmoker: g.hasSmoker,
+    hasChild: withChild,
     remain: randInt(CONFIG.STAY_MIN_TURNS, CONFIG.STAY_MAX_TURNS),
     justSeated: true,
   });
@@ -755,6 +778,10 @@ for (const diff of CONFIG.DIFFICULTIES) {
   btn.addEventListener("click", () => { initAudio(); startGame(diff); });
   $("diff-btns").appendChild(btn);
 }
+$("legend").innerHTML =
+  `<span class="li">${personSVG(COLORS.normal, true)}一般</span>` +
+  `<span class="li">${personSVG(COLORS.smoker, true)}喫煙希望</span>` +
+  `<span class="li">${childSVG(COLORS.child)}子ども</span>`;
 $("btn-pass").addEventListener("click", onPassClick);
 const toTitle = () => { G.state = "title"; showScreen("title"); };
 $("btn-to-title").addEventListener("click", toTitle);
