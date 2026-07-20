@@ -187,39 +187,51 @@
     font-size:15px; font-weight:bold; letter-spacing:3px; color:#4a7a3a;
     pointer-events:none;
   }
-  .counter-label {
-    position:absolute; top:5px; left:0; width:517px; text-align:center;
-    font-size:10px; color:#776; pointer-events:none;
-  }
 
-  .table {
-    position:absolute; box-sizing:border-box; cursor:pointer;
-    border-radius:8px; text-align:center;
+  /* 席セット（机＋椅子）。コンテナ自体は透明で、クリック判定に使う */
+  .table { position:absolute; cursor:pointer; }
+  .ttable {
+    position:absolute; box-sizing:border-box; pointer-events:none;
     background: linear-gradient(#c89858, #a87838);
     border: 3px solid #7a5220;
+    border-radius: 8px;
     box-shadow: 2px 3px 0 rgba(0,0,0,.25);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:1px;
   }
-  .table.counter {
-    border-radius:50%;
-    background: radial-gradient(circle at 35% 30%, #d8a868, #986830);
+  .chair {
+    position:absolute; box-sizing:border-box; pointer-events:none;
+    width:26px; height:26px;
+    background: linear-gradient(#b08850, #8a6238);
+    border: 2px solid #66471f;
+    border-radius: 7px;
+    box-shadow: 1px 2px 0 rgba(0,0,0,.25);
+    display:flex; align-items:center; justify-content:center;
   }
-  .table .cap-label {
+  .chair svg.person { width:13px; height:17px; }
+  .chair svg.person.small { width:11px; height:14px; }
+  .counter-bar {
+    position:absolute; box-sizing:border-box; pointer-events:none;
+    background: linear-gradient(#c89858, #a87838);
+    border: 3px solid #7a5220;
+    border-radius: 6px;
+    box-shadow: 2px 3px 0 rgba(0,0,0,.25);
+    color:#fff8e0; font-size:10px; text-align:center;
+    text-shadow:1px 1px 0 rgba(0,0,0,.4); line-height:23px;
+    letter-spacing:2px;
+  }
+  .cap-label {
     font-size:9px; color:#fff8e0; text-shadow:1px 1px 0 rgba(0,0,0,.4);
-    pointer-events:none; line-height:1.1; padding-top:2px;
+    line-height:1.1;
   }
-  .table .occ {
-    display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
-    gap:1px; pointer-events:none;
-  }
+  .chips { display:flex; flex-wrap:wrap; justify-content:center; gap:1px; }
   .remain-chip {
     font-size:9px; line-height:12px; padding:0 3px; border-radius:6px;
-    background:#403020; color:#ffe080; margin-left:1px;
+    background:#403020; color:#ffe080;
   }
-  /* 相席時にグループの区切りが分かるよう、組ごとに枠で囲む */
-  .party {
-    display:inline-flex; align-items:flex-end; gap:1px;
-    background:rgba(255,255,255,.35); border:1px solid rgba(60,40,20,.45);
-    border-radius:5px; padding:1px 2px; margin:1px;
+  .counter-chip {
+    position:absolute; top:28px; left:50%; transform:translateX(-50%);
+    white-space:nowrap;
   }
 
   /* --- 凡例 --- */
@@ -230,8 +242,8 @@
   }
   #legend .li { display:flex; align-items:flex-end; gap:2px; }
 
-  .table.ok {
-    border-color:#20c020;
+  .table.ok .ttable, .table.ok .chair { border-color:#20c020; }
+  .table.ok .ttable, .table.ok.counter .chair {
     box-shadow: 0 0 10px 3px rgba(60,220,60,.8);
     animation: blink .8s infinite;
   }
@@ -349,7 +361,8 @@
           <div class="room-label">喫煙ルーム</div>
           <div id="smoke-door"></div>
         </div>
-        <div class="counter-label">カウンター（1人席）</div>
+        <div class="counter-bar" style="left:15px; top:12px; width:452px; height:28px;">カウンター（1人席）</div>
+        <div class="counter-bar" style="left:616px; top:36px; width:28px; height:210px;"></div>
         <div id="entrance-mark">◀ 入口</div>
       </div>
     </div>
@@ -432,41 +445,62 @@ const groupColor = (g) => (g.hasChild ? COLORS.child : g.hasSmoker ? COLORS.smok
  * テーブルレイアウト（ドトール風カフェ）
  *  area: "ns"=禁煙フロア / "sm"=喫煙ルーム   type: "counter"(定員1) / "table"
  *  カウンター1人席は計10席（禁煙7＋喫煙ルーム3）
+ *  カウンターは長机（.counter-bar）沿いに椅子を並べ、
+ *  2人席・4人席は机の左右／上下に椅子を配置する
  * ============================================================== */
 const TABLE_LAYOUT = [
-  // 禁煙フロア：カウンター7席（上部横一列）
-  { id:"c1", type:"counter", cap:1, area:"ns", x: 20, y: 22, w: 44, h: 46 },
-  { id:"c2", type:"counter", cap:1, area:"ns", x: 90, y: 22, w: 44, h: 46 },
-  { id:"c3", type:"counter", cap:1, area:"ns", x:160, y: 22, w: 44, h: 46 },
-  { id:"c4", type:"counter", cap:1, area:"ns", x:230, y: 22, w: 44, h: 46 },
-  { id:"c5", type:"counter", cap:1, area:"ns", x:300, y: 22, w: 44, h: 46 },
-  { id:"c6", type:"counter", cap:1, area:"ns", x:370, y: 22, w: 44, h: 46 },
-  { id:"c7", type:"counter", cap:1, area:"ns", x:440, y: 22, w: 44, h: 46 },
-  // 禁煙フロア：2人席 9卓（3列×3行）
-  { id:"t1", type:"table", cap:2, area:"ns", x: 30, y:100, w: 82, h: 54 },
-  { id:"t2", type:"table", cap:2, area:"ns", x:195, y:100, w: 82, h: 54 },
-  { id:"t3", type:"table", cap:2, area:"ns", x:360, y:100, w: 82, h: 54 },
-  { id:"t4", type:"table", cap:2, area:"ns", x: 30, y:182, w: 82, h: 54 },
-  { id:"t5", type:"table", cap:2, area:"ns", x:195, y:182, w: 82, h: 54 },
-  { id:"t6", type:"table", cap:2, area:"ns", x:360, y:182, w: 82, h: 54 },
-  { id:"t7", type:"table", cap:2, area:"ns", x: 30, y:264, w: 82, h: 54 },
-  { id:"t8", type:"table", cap:2, area:"ns", x:195, y:264, w: 82, h: 54 },
-  { id:"t9", type:"table", cap:2, area:"ns", x:360, y:264, w: 82, h: 54 },
-  // 禁煙フロア：4人席 4卓（下段横一列）
-  { id:"t10", type:"table", cap:4, area:"ns", x: 22, y:355, w:100, h: 68 },
-  { id:"t11", type:"table", cap:4, area:"ns", x:146, y:355, w:100, h: 68 },
-  { id:"t12", type:"table", cap:4, area:"ns", x:270, y:355, w:100, h: 68 },
-  { id:"t13", type:"table", cap:4, area:"ns", x:394, y:355, w:100, h: 68 },
-  // 喫煙ルーム：カウンター3席（右壁沿い縦）
-  { id:"c8",  type:"counter", cap:1, area:"sm", x:592, y: 40, w: 44, h: 46 },
-  { id:"c9",  type:"counter", cap:1, area:"sm", x:592, y:110, w: 44, h: 46 },
-  { id:"c10", type:"counter", cap:1, area:"sm", x:592, y:180, w: 44, h: 46 },
+  // 禁煙フロア：カウンター7席（上部の長机沿いに椅子）
+  { id:"c1", type:"counter", cap:1, area:"ns", x: 27, y: 46 },
+  { id:"c2", type:"counter", cap:1, area:"ns", x: 93, y: 46 },
+  { id:"c3", type:"counter", cap:1, area:"ns", x:159, y: 46 },
+  { id:"c4", type:"counter", cap:1, area:"ns", x:225, y: 46 },
+  { id:"c5", type:"counter", cap:1, area:"ns", x:291, y: 46 },
+  { id:"c6", type:"counter", cap:1, area:"ns", x:357, y: 46 },
+  { id:"c7", type:"counter", cap:1, area:"ns", x:423, y: 46 },
+  // 禁煙フロア：2人席 9卓（3列×3行、机の左右に椅子）
+  { id:"t1", type:"table", cap:2, area:"ns", x: 25, y: 98 },
+  { id:"t2", type:"table", cap:2, area:"ns", x:190, y: 98 },
+  { id:"t3", type:"table", cap:2, area:"ns", x:355, y: 98 },
+  { id:"t4", type:"table", cap:2, area:"ns", x: 25, y:170 },
+  { id:"t5", type:"table", cap:2, area:"ns", x:190, y:170 },
+  { id:"t6", type:"table", cap:2, area:"ns", x:355, y:170 },
+  { id:"t7", type:"table", cap:2, area:"ns", x: 25, y:242 },
+  { id:"t8", type:"table", cap:2, area:"ns", x:190, y:242 },
+  { id:"t9", type:"table", cap:2, area:"ns", x:355, y:242 },
+  // 禁煙フロア：4人席 4卓（机の上下に椅子2脚ずつ）
+  { id:"t10", type:"table", cap:4, area:"ns", x: 28, y:322 },
+  { id:"t11", type:"table", cap:4, area:"ns", x:152, y:322 },
+  { id:"t12", type:"table", cap:4, area:"ns", x:276, y:322 },
+  { id:"t13", type:"table", cap:4, area:"ns", x:400, y:322 },
+  // 喫煙ルーム：カウンター3席（右壁の長机沿いに椅子）
+  { id:"c8",  type:"counter", cap:1, area:"sm", x:586, y: 50 },
+  { id:"c9",  type:"counter", cap:1, area:"sm", x:586, y:120 },
+  { id:"c10", type:"counter", cap:1, area:"sm", x:586, y:190 },
   // 喫煙ルーム：2人席 2卓
-  { id:"t14", type:"table", cap:2, area:"sm", x:540, y:255, w: 82, h: 54 },
-  { id:"t15", type:"table", cap:2, area:"sm", x:540, y:335, w: 82, h: 54 },
+  { id:"t14", type:"table", cap:2, area:"sm", x:524, y:268 },
+  { id:"t15", type:"table", cap:2, area:"sm", x:524, y:330 },
   // 喫煙ルーム：4人席 1卓
-  { id:"t16", type:"table", cap:4, area:"sm", x:532, y:420, w:100, h: 68 },
+  { id:"t16", type:"table", cap:4, area:"sm", x:548, y:400 },
 ];
+
+// 席タイプごとの机・椅子の配置（コンテナ内の相対座標）
+function tableGeometry(def) {
+  if (def.type === "counter") {
+    return { w: 26, h: 46, tbl: null, chairs: [{ x: 0, y: 0 }] };
+  }
+  if (def.cap === 2) {
+    return {
+      w: 116, h: 48,
+      tbl: { x: 30, y: 0, w: 56, h: 48 },
+      chairs: [{ x: 0, y: 11 }, { x: 90, y: 11 }],
+    };
+  }
+  return { // 4人席
+    w: 84, h: 104,
+    tbl: { x: 0, y: 28, w: 84, h: 48 },
+    chairs: [{ x: 8, y: 0 }, { x: 50, y: 0 }, { x: 8, y: 78 }, { x: 50, y: 78 }],
+  };
+}
 
 /* ==============================================================
  * 設定（音量は0〜10の11段階、localStorageに保存）
@@ -700,14 +734,15 @@ function buildTables() {
   const floor = $("floor");
   floor.querySelectorAll(".table").forEach((el) => el.remove());
   G.tables = TABLE_LAYOUT.map((def) => {
+    const geo = tableGeometry(def);
     const el = document.createElement("div");
     el.className = "table" + (def.type === "counter" ? " counter" : "");
     el.style.left = def.x + "px";
     el.style.top = def.y + "px";
-    el.style.width = def.w + "px";
-    el.style.height = def.h + "px";
+    el.style.width = geo.w + "px";
+    el.style.height = geo.h + "px";
     floor.appendChild(el);
-    const t = { ...def, parties: [], el };
+    const t = { ...def, geo, parties: [], el };
     el.addEventListener("click", (e) => { e.stopPropagation(); onTableClick(t); });
     renderTable(t);
     return t;
@@ -717,22 +752,33 @@ const tableUsed = (t) => t.parties.reduce((s, p) => s + p.size, 0);
 const tableFree = (t) => t.cap - tableUsed(t);
 
 function renderTable(t) {
-  let html = "";
-  if (t.type === "counter") {
-    if (t.parties.length === 0) html += `<div class="cap-label" style="padding-top:5px">1</div>`;
-  } else {
-    html += `<div class="cap-label">${t.cap}人席</div>`;
-  }
-  html += `<div class="occ">`;
+  // 着席メンバーを椅子に割り当てる（グループの並び順のまま）
+  const seats = [];
   for (const p of t.parties) {
     const color = p.childGroup ? COLORS.child : p.hasSmoker ? COLORS.smoker : COLORS.normal;
-    html += `<span class="party">`;
-    const adults = p.size - (p.hasChild ? 1 : 0);
-    for (let i = 0; i < adults; i++) html += personSVG(color, true);
-    if (p.hasChild) html += childSVG(color);
-    html += `<span class="remain-chip">あと${p.remain}</span></span>`;
+    for (let i = 0; i < p.size; i++) {
+      seats.push({ color, isChild: p.hasChild && i === p.size - 1 });
+    }
   }
-  html += `</div>`;
+  let html = "";
+  t.geo.chairs.forEach((c, i) => {
+    const s = seats[i];
+    html += `<div class="chair" style="left:${c.x}px;top:${c.y}px">` +
+      (s ? (s.isChild ? childSVG(s.color) : personSVG(s.color, true)) : "") + `</div>`;
+  });
+  if (t.type === "counter") {
+    // カウンターは椅子の下に退店までの残りターンを表示
+    if (t.parties.length > 0) {
+      html += `<div class="remain-chip counter-chip">あと${t.parties[0].remain}</div>`;
+    }
+  } else {
+    const b = t.geo.tbl;
+    html += `<div class="ttable" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px">` +
+      `<div class="cap-label">${t.cap}人席</div>` +
+      `<div class="chips">` +
+      t.parties.map((p) => `<span class="remain-chip">あと${p.remain}</span>`).join("") +
+      `</div></div>`;
+  }
   t.el.innerHTML = html;
 }
 
