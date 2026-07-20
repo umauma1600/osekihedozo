@@ -226,6 +226,14 @@
   @keyframes blink { 50% { box-shadow: 0 0 4px 1px rgba(60,220,60,.4); } }
   .table.ng { opacity:.45; cursor:not-allowed; }
 
+  /* 準備中（コースで閉じている席）：グレーアウトして案内不可 */
+  .table.closed { opacity:.3; filter:grayscale(1); cursor:default; pointer-events:none; }
+  .table.closed .closed-chip {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    font-size:9px; color:#fff; background:rgba(70,50,35,.85);
+    border:1px solid #fff; border-radius:8px; padding:0 5px; white-space:nowrap;
+  }
+
   #entrance-mark {
     position:absolute; left:6px; bottom:34px; font-size:11px; color:#997; pointer-events:none;
     background:rgba(255,255,255,.5); border-radius:8px; padding:2px 6px;
@@ -433,17 +441,21 @@ const CONFIG = {
 
   // 【決められたコース】ノーミス解が必ず存在する手作りステージ。
   //  「正しい席割り」をシミュレートし、その来店順を書き出す“解からの逆生成”。
-  //  seed 固定なので毎回まったく同じ配置。難易度カーブは主にこちらで表現する。
+  //  seed 固定なので毎回まったく同じ配置。
+  //  難易度は主に open（使える席数）で作る＝盤面を小さくして“詰将棋”にする。
+  //  閉じた席は「準備中」表示になり案内できない。
   //   groups=総組数 / stayMin,stayMax=滞在ターン範囲 /
   //   wBig=4人席を選ぶ重み / wSmoke=喫煙ルームを選ぶ重み /
-  //   childRate=子連れ化する確率 / fill=席の定員いっぱいに埋める確率
+  //   childRate=子連れ化する確率 / fill=席の定員いっぱいに埋める確率 /
+  //   open=開放する席数（nsC/ns2/ns4=禁煙のカウンター/2人席/4人席、smC/sm2/sm4=喫煙）
+  //  各コースは smallest-fit（素直な良手）でも詰まないよう調整済み（要先読み）。
   COURSES: [
-    { label: "開店準備",       seed: 1101, groups: 8,  stayMin: 3, stayMax: 5, wBig: 1.0, wSmoke: 0.6, childRate: 0.15, fill: 0.35 },
-    { label: "昼の混みぐあい",  seed: 2027, groups: 13, stayMin: 3, stayMax: 6, wBig: 1.4, wSmoke: 0.9, childRate: 0.22, fill: 0.50 },
-    { label: "4人席のやりくり", seed: 3313, groups: 16, stayMin: 4, stayMax: 7, wBig: 3.2, wSmoke: 0.7, childRate: 0.18, fill: 0.85 },
-    { label: "喫煙ルーム満員",  seed: 4402, groups: 18, stayMin: 4, stayMax: 7, wBig: 1.6, wSmoke: 3.0, childRate: 0.12, fill: 0.60 },
-    { label: "子連れラッシュ",  seed: 5551, groups: 20, stayMin: 4, stayMax: 7, wBig: 2.0, wSmoke: 0.5, childRate: 0.50, fill: 0.70 },
-    { label: "大混雑",         seed: 6640, groups: 24, stayMin: 5, stayMax: 8, wBig: 2.6, wSmoke: 1.6, childRate: 0.30, fill: 0.85 },
+    { label: "開店準備",     seed: 1,  groups: 12, stayMin: 3, stayMax: 5, wBig: 1.0, wSmoke: 0.8, childRate: 0.15, fill: 0.40, open: { nsC: 2, ns2: 4, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
+    { label: "昼の常連",     seed: 60, groups: 14, stayMin: 3, stayMax: 6, wBig: 1.6, wSmoke: 1.0, childRate: 0.20, fill: 0.60, open: { nsC: 1, ns2: 3, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
+    { label: "四人席の攻防", seed: 10, groups: 16, stayMin: 4, stayMax: 6, wBig: 2.6, wSmoke: 0.6, childRate: 0.20, fill: 0.80, open: { nsC: 1, ns2: 2, ns4: 3, smC: 1, sm2: 1, sm4: 0 } },
+    { label: "喫煙室ぎりぎり", seed: 9,  groups: 16, stayMin: 4, stayMax: 6, wBig: 1.4, wSmoke: 2.4, childRate: 0.12, fill: 0.60, open: { nsC: 1, ns2: 2, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
+    { label: "満席まぎわ",   seed: 32, groups: 18, stayMin: 4, stayMax: 6, wBig: 2.2, wSmoke: 1.4, childRate: 0.28, fill: 0.75, open: { nsC: 1, ns2: 2, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
+    { label: "大詰め",       seed: 34, groups: 20, stayMin: 4, stayMax: 6, wBig: 2.6, wSmoke: 1.2, childRate: 0.25, fill: 0.80, open: { nsC: 1, ns2: 2, ns4: 3, smC: 0, sm2: 1, sm4: 1 } },
   ],
 
   // 【ランダム〈鬼〉】本当にランダム生成。ノーミス解は保証しない、最高難度の腕試し。
@@ -641,6 +653,7 @@ const SFX = {
 const G = {
   state: "title",      // title / play / result
   scenario: null,      // 選択中のシナリオ（コース or ランダム）
+  openSet: null,       // 開放している席の TABLE_LAYOUT インデックス集合（null=全席）
   total: 0,            // 総組数
   mistakes: 0,         // 「おてつき」回数
   turn: 0,
@@ -747,19 +760,39 @@ function pickWeighted(arr, weights, rnd) {
   return arr[arr.length - 1];
 }
 
-// 【コース】空いている互換テーブルへ順に「正しく」着席させ、その来店順を書き出す。
-// 生成に使った手順そのものがノーミス解になるので、必ず解ける。
+// コースで開放する席の TABLE_LAYOUT インデックス一覧（タイプごとに先頭から k 個）。
+// ゲーム本体（buildTables）と来店生成の両方がこれを使い、開放席を完全に一致させる。
+function courseOpenIndices(spec) {
+  const idx = [];
+  const kinds = [
+    ["counter", 1, "ns", spec.nsC], ["table", 2, "ns", spec.ns2], ["table", 4, "ns", spec.ns4],
+    ["counter", 1, "sm", spec.smC], ["table", 2, "sm", spec.sm2], ["table", 4, "sm", spec.sm4],
+  ];
+  for (const [type, cap, area, k] of kinds) {
+    let c = 0;
+    for (let i = 0; i < TABLE_LAYOUT.length; i++) {
+      const t = TABLE_LAYOUT[i];
+      if (t.type === type && t.cap === cap && t.area === area && c < k) { idx.push(i); c++; }
+    }
+  }
+  return idx.sort((a, b) => a - b);
+}
+
+// 【コース】開放席の中で、空いている互換テーブルへ順に「正しく」着席させ来店順を書き出す。
+// 生成に使った手順そのものがノーミス解になるので必ず解ける（開放席が少ないほど盤面が
+// タイトになり、素直な置き方では詰むように調整してある）。
 // ターン消化のタイミングはゲーム本編の endTurn と同一（着席直後のターンは減らさない）。
 function buildCourseLineup(c) {
   const rnd = mulberry32(c.seed);
   const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
-  const tbls = TABLE_LAYOUT.map((d) => ({ cap: d.cap, area: d.area, type: d.type, party: null }));
+  const open = courseOpenIndices(c.open);
+  const tbls = open.map((i) => ({ cap: TABLE_LAYOUT[i].cap, area: TABLE_LAYOUT[i].area, type: TABLE_LAYOUT[i].type, party: null }));
   const lineup = [];
 
   for (let i = 0; i < c.groups; i++) {
     // いま空いている席を重み付けで1つ選ぶ（4人席・喫煙室を優先すると難度が上がる）
     const empties = tbls.filter((t) => !t.party);
-    const pool = empties.length ? empties : tbls; // 空席が尽きる状況は起きない前提の安全網
+    const pool = empties.length ? empties : tbls; // 空席が尽きる状況は起きない前提（調整済み）
     const weights = pool.map((t) => {
       let w = 1;
       if (t.cap === 4) w *= c.wBig;
@@ -835,16 +868,17 @@ function renderQueue() {
 function buildTables() {
   const floor = $("floor");
   floor.querySelectorAll(".table").forEach((el) => el.remove());
-  G.tables = TABLE_LAYOUT.map((def) => {
+  G.tables = TABLE_LAYOUT.map((def, index) => {
     const geo = tableGeometry(def);
+    const open = !G.openSet || G.openSet.has(index);
     const el = document.createElement("div");
-    el.className = "table" + (def.type === "counter" ? " counter" : "");
+    el.className = "table" + (def.type === "counter" ? " counter" : "") + (open ? "" : " closed");
     el.style.left = def.x + "px";
     el.style.top = def.y + "px";
     el.style.width = geo.w + "px";
     el.style.height = geo.h + "px";
     floor.appendChild(el);
-    const t = { ...def, geo, parties: [], el };
+    const t = { ...def, geo, parties: [], el, open };
     el.addEventListener("click", (e) => { e.stopPropagation(); onTableClick(t); });
     renderTable(t);
     return t;
@@ -881,11 +915,14 @@ function renderTable(t) {
       t.parties.map((p) => `<span class="remain-chip">あと${p.remain}</span>`).join("") +
       `</div></div>`;
   }
+  if (t.open === false) html += `<div class="closed-chip">準備中</div>`;
   t.el.innerHTML = html;
 }
 
 // 案内可否判定
 function canSeat(group, t) {
+  if (t.open === false)
+    return { ok: false, reason: "その席は準備中です。" };
   if (group.hasChild && t.area === "sm")
     return { ok: false, reason: "お子さま連れは喫煙ルームにご案内できません！" };
   if (group.hasChild && t.type === "counter")
@@ -899,13 +936,14 @@ function updateHighlights() {
   const g = headGroup();
   for (const t of G.tables) {
     t.el.classList.remove("ok", "ng");
-    if (!g || G.state !== "play") continue;
+    if (!g || G.state !== "play" || t.open === false) continue;
     t.el.classList.add(canSeat(g, t).ok ? "ok" : "ng");
   }
 }
 
 function onTableClick(t) {
   if (G.state !== "play") return;
+  if (t.open === false) return; // 準備中の席は無反応
   const g = headGroup();
   if (!g) return;
   const check = canSeat(g, t);
@@ -1002,6 +1040,7 @@ function showScreen(name) {
 function startScenario(scn) {
   G.state = "play";
   G.scenario = scn;
+  G.openSet = scn.openSet || null; // null＝全席開放（ランダム〈鬼〉）
   G.mistakes = 0;
   G.turn = 0;
   G.guided = 0;
@@ -1065,7 +1104,11 @@ for (const c of CONFIG.COURSES) {
   btn.innerHTML = `${c.label}<small>${c.groups}組</small>`;
   btn.addEventListener("click", () => {
     initAudio();
-    startScenario({ label: c.label, build: () => buildCourseLineup(c) });
+    startScenario({
+      label: c.label,
+      openSet: new Set(courseOpenIndices(c.open)),
+      build: () => buildCourseLineup(c),
+    });
   });
   $("course-btns").appendChild(btn);
 }
