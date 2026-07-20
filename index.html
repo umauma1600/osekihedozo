@@ -53,28 +53,32 @@
     color:#fff;
   }
   #screen-title h1 {
-    font-size: 52px; margin: 0 0 4px;
+    font-size: 50px; margin: 0 0 4px;
     color: #ffe680;
     text-shadow: 3px 3px 0 #601008, 6px 6px 0 rgba(0,0,0,.3);
     letter-spacing: 4px;
   }
   #screen-title h2 {
-    font-size: 18px; margin: 0 0 30px; font-weight: normal; color: #ffd0c0;
+    font-size: 17px; margin: 0 0 22px; font-weight: normal; color: #ffd0c0;
     letter-spacing: 6px;
   }
   #title-help {
-    width: 560px; background: rgba(0,0,0,.35);
+    width: 580px; background: rgba(0,0,0,.35);
     border: 2px solid rgba(255,255,255,.4); border-radius: 8px;
-    font-size: 13px; line-height: 1.8; padding: 12px 20px; margin-bottom: 28px;
+    font-size: 12px; line-height: 1.8; padding: 10px 18px; margin-bottom: 20px;
   }
   #title-help b { color:#ffe680; }
+  #diff-label { font-size:15px; letter-spacing:3px; margin-bottom:10px; color:#ffe0c0; }
+  #diff-btns { display:flex; gap:14px; }
+  #diff-btns .flashbtn { font-size:15px; padding:8px 18px; }
+  #diff-btns .flashbtn small { display:block; font-size:11px; letter-spacing:0; color:#666; }
 
   /* ===== プレイ画面 ===== */
   #topbar {
     position:absolute; top:0; left:0; right:0; height:64px;
     background: linear-gradient(#6a4a30, #4a3020);
     color:#fff; box-sizing:border-box;
-    display:flex; align-items:center; gap:16px; padding:0 12px;
+    display:flex; align-items:center; gap:14px; padding:0 12px;
     border-bottom: 3px solid #2e1d12;
     font-size: 13px;
   }
@@ -104,7 +108,7 @@
 
   #playarea { position:absolute; top:64px; left:0; right:0; bottom:0; display:flex; }
 
-  /* --- 待機列 --- */
+  /* --- 来店リスト --- */
   #queue-col {
     width: 150px; background: #d8c8a8; border-right: 3px solid #a08860;
     display:flex; flex-direction:column; box-sizing:border-box;
@@ -113,55 +117,66 @@
     text-align:center; font-size:13px; font-weight:bold; color:#553;
     padding: 5px 0 3px; border-bottom: 2px dashed #a08860;
   }
+  #queue-sub { text-align:center; font-size:10px; color:#775; padding:2px 0; }
   #queue-list { flex:1; overflow-y:auto; padding:6px; }
-  #btn-cancel-wrap { padding: 6px; text-align:center; border-top: 2px dashed #a08860; }
+  #btn-pass-wrap { padding: 6px; text-align:center; border-top: 2px dashed #a08860; }
+  #btn-pass-wrap .note { font-size:9px; color:#886; margin-top:2px; }
 
   .gcard {
     background:#fffef2; border:2px solid #b0a070; border-radius:6px;
-    margin-bottom:6px; padding:4px 5px; cursor:pointer; position:relative;
+    margin-bottom:6px; padding:4px 5px 5px; position:relative;
   }
-  .gcard:hover { border-color:#e0a020; }
-  .gcard.selected {
+  .gcard.current {
     border-color:#e05010; background:#fff0c0;
     box-shadow: 0 0 8px 2px rgba(240,120,20,.7);
   }
-  .gcard .gsize { font-size:11px; color:#664; }
-  .gcard .gicons { display:flex; align-items:flex-end; gap:1px; min-height:24px; flex-wrap:wrap; }
+  .gcard.current::before {
+    content:"▶ つぎのご案内"; display:block;
+    font-size:10px; color:#c04000; font-weight:bold; margin-bottom:1px;
+  }
+  .gcard .gno {
+    position:absolute; top:-2px; left:-2px;
+    background:#8a6a40; color:#fff; font-size:9px; line-height:13px;
+    padding:0 5px; border-radius:6px 0 6px 0;
+  }
+  .gcard .gsize { font-size:11px; color:#664; margin-left:18px; }
+  .gcard.current .gsize { margin-left:0; }
+  .gcard .gicons { display:flex; align-items:flex-end; gap:1px; min-height:22px; flex-wrap:wrap; }
   .gcard .badges { position:absolute; top:2px; right:3px; display:flex; gap:2px; }
   .badge {
     font-size:10px; line-height:14px; padding:0 4px; border-radius:7px; color:#fff;
   }
   .badge.smoke { background:#996633; }
   .badge.child { background:#e08820; }
-  .waitbar-outer { height:5px; background:#ddd; border-radius:3px; margin-top:3px; overflow:hidden; }
-  .waitbar-inner { height:100%; width:0%; background:#8c4; }
-  .gcard.angry .waitbar-inner { background:#e33; }
-  .gcard.angry::after {
-    content:"💢"; position:absolute; bottom:14px; right:2px; font-size:13px;
-    animation: shake .5s infinite;
-  }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-1px)} 75%{transform:translateX(1px)} }
 
   svg.person { width:14px; height:18px; display:block; }
   svg.person.small { width:10px; height:13px; }
 
   /* --- フロア --- */
-  #floor { position:relative; flex:1; background:#efe2c4; }
-  #area-ns, #area-sm { position:absolute; top:0; bottom:0; }
-  #area-ns { left:0;   width:322px; background:#e8f2e0; }
-  #area-sm { left:325px; right:0;  background:#efe0d0; }
-  #area-divider {
-    position:absolute; top:0; bottom:0; left:322px; width:3px;
-    background: repeating-linear-gradient(#a08860 0 12px, transparent 12px 20px);
+  #floor { position:relative; flex:1; background:#efe8da; overflow:hidden; }
+  #area-ns { position:absolute; top:0; bottom:0; left:0; width:517px; background:#efe8da; }
+  #smoke-room {
+    position:absolute; top:0; bottom:0; left:517px; right:0;
+    background:#e8d5c5;
+    border-left:5px solid #8a6a4a;
+    box-sizing:border-box;
   }
-  .area-label {
+  #smoke-door {
+    position:absolute; left:-5px; top:445px; width:5px; height:60px;
+    background: repeating-linear-gradient(#fff8e8 0 8px, #d8c8a8 8px 12px);
+  }
+  #smoke-room .room-label {
+    position:absolute; top:6px; width:100%; text-align:center;
+    font-size:13px; font-weight:bold; letter-spacing:2px; color:#8a5a30;
+    pointer-events:none;
+  }
+  #area-ns .area-label {
     position:absolute; bottom:6px; width:100%; text-align:center;
-    font-size:15px; font-weight:bold; letter-spacing:3px; pointer-events:none;
+    font-size:15px; font-weight:bold; letter-spacing:3px; color:#4a7a3a;
+    pointer-events:none;
   }
-  #area-ns .area-label { color:#4a7a3a; }
-  #area-sm .area-label { color:#8a5a30; }
   .counter-label {
-    position:absolute; top:4px; width:100%; text-align:center;
+    position:absolute; top:5px; left:0; width:517px; text-align:center;
     font-size:10px; color:#776; pointer-events:none;
   }
 
@@ -177,15 +192,17 @@
     background: radial-gradient(circle at 35% 30%, #d8a868, #986830);
   }
   .table .cap-label {
-    font-size:10px; color:#fff8e0; text-shadow:1px 1px 0 rgba(0,0,0,.4);
+    font-size:9px; color:#fff8e0; text-shadow:1px 1px 0 rgba(0,0,0,.4);
     pointer-events:none; line-height:1.1; padding-top:2px;
   }
-  .table .occ { display:flex; flex-wrap:wrap; justify-content:center; gap:1px; pointer-events:none; }
-  .table .staybar {
-    position:absolute; left:4px; right:4px; bottom:3px; height:4px;
-    background:rgba(0,0,0,.35); border-radius:2px; overflow:hidden; pointer-events:none;
+  .table .occ {
+    display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
+    gap:1px; pointer-events:none;
   }
-  .table .staybar i { display:block; height:100%; background:#ffe080; }
+  .remain-chip {
+    font-size:9px; line-height:12px; padding:0 3px; border-radius:6px;
+    background:#403020; color:#ffe080; margin-left:1px;
+  }
 
   .table.ok {
     border-color:#20c020;
@@ -195,9 +212,8 @@
   @keyframes blink { 50% { box-shadow: 0 0 4px 1px rgba(60,220,60,.4); } }
   .table.ng { opacity:.45; cursor:not-allowed; }
 
-  /* 入口矢印 */
   #entrance-mark {
-    position:absolute; left:6px; top:215px; font-size:11px; color:#997; pointer-events:none;
+    position:absolute; left:6px; bottom:34px; font-size:11px; color:#997; pointer-events:none;
     background:rgba(255,255,255,.5); border-radius:8px; padding:2px 6px;
   }
 
@@ -234,21 +250,24 @@
   <!-- ============ タイトル ============ -->
   <div id="screen-title" class="screen">
     <h1>お席へどうぞ！</h1>
-    <h2>〜 レストラン案内係 〜</h2>
+    <h2>〜 カフェ案内係 〜</h2>
     <div id="title-help">
-      あなたはレストランの案内係。待機列のお客さまをクリックで選び、席をクリックしてご案内！<br>
-      ・<b>タバコ</b>マークのグループは<b>喫煙エリア</b>希望、それ以外は<b>禁煙エリア</b>希望。<br>
-      ・<b>子ども連れ</b>は喫煙エリアとカウンターにはご案内できません。<br>
-      ・相席・グループの分割・エリア違い・待たせすぎは<b>不満ゲージ</b>が上昇。<br>
-      ・ゲージが満タンになるとゲームオーバー！ 全組をさばいてステージクリアを目指そう。
+      あなたはカフェの案内係。来店リストのお客さまを、上から順番に席へご案内するターン制パズル！<br>
+      ・案内（または待機）するたびに<b>1ターン</b>経過。お客さまは数ターン滞在して退店します。<br>
+      ・<b>タバコ</b>マークのグループは<b>喫煙ルーム</b>希望、それ以外は<b>禁煙席</b>希望。<br>
+      ・<b>子ども連れ</b>は喫煙ルームとカウンターにはご案内できません。<br>
+      ・<b>不満ゲージ</b>の増加量：グループ分割 ＞ 相席 ＞ エリア違い ＞ 待機。満タンでゲームオーバー！<br>
+      ・全組をご案内しきればクリア。じっくり考えて最善の席割りを見つけよう。
     </div>
-    <button id="btn-start" class="flashbtn">スタート</button>
+    <div id="diff-label">― 難易度をえらんでスタート ―</div>
+    <div id="diff-btns"></div>
   </div>
 
   <!-- ============ プレイ ============ -->
   <div id="screen-play" class="screen hidden">
     <div id="topbar">
-      <div class="stat">ステージ <b id="ui-stage">1</b></div>
+      <div class="stat" id="ui-diff">かんたん</div>
+      <div class="stat">ターン <b id="ui-turn">0</b></div>
       <div class="stat">案内 <b id="ui-guided">0</b>/<span id="ui-total">10</span> 組</div>
       <div id="gauge-box">
         <div id="gauge-label">お客さまの不満ゲージ</div>
@@ -257,19 +276,25 @@
           <div id="gauge-text">0%</div>
         </div>
       </div>
+      <button id="btn-quit" class="flashbtn small">タイトルへ</button>
     </div>
     <div id="playarea">
       <div id="queue-col">
-        <div id="queue-head">入口・待機列</div>
+        <div id="queue-head">来店リスト</div>
+        <div id="queue-sub">残り <span id="ui-remain">0</span> 組</div>
         <div id="queue-list"></div>
-        <div id="btn-cancel-wrap">
-          <button id="btn-cancel" class="flashbtn small">選択解除</button>
+        <div id="btn-pass-wrap">
+          <button id="btn-pass" class="flashbtn small">待機する</button>
+          <div class="note">1ターン経過（不満 +2）</div>
         </div>
       </div>
       <div id="floor">
-        <div id="area-ns"><div class="area-label">禁 煙 エ リ ア</div><div class="counter-label">カウンター（1人席）</div></div>
-        <div id="area-sm"><div class="area-label">喫 煙 エ リ ア</div><div class="counter-label">カウンター（1人席）</div></div>
-        <div id="area-divider"></div>
+        <div id="area-ns"><div class="area-label">禁 煙 席</div></div>
+        <div id="smoke-room">
+          <div class="room-label">喫煙ルーム</div>
+          <div id="smoke-door"></div>
+        </div>
+        <div class="counter-label">カウンター（1人席）</div>
         <div id="entrance-mark">◀ 入口</div>
       </div>
     </div>
@@ -279,15 +304,15 @@
   <!-- ============ リザルト ============ -->
   <div id="screen-result" class="screen hidden">
     <div id="result-box">
-      <h2 id="result-title">ステージクリア！</h2>
+      <h2 id="result-title">クリア！</h2>
       <div id="result-stats"></div>
-      <button id="btn-result" class="flashbtn">次のステージへ</button>
+      <button id="btn-result" class="flashbtn">もう一度</button>
       <div style="margin-top:10px;"><button id="btn-to-title" class="flashbtn small">タイトルへ戻る</button></div>
     </div>
   </div>
 
 </div>
-<div class="credit">© 2026 お席へどうぞ！ — マウスだけで遊べます / Escキーで選択解除</div>
+<div class="credit">© 2026 お席へどうぞ！ — マウスだけで遊べます</div>
 </div>
 
 <script>
@@ -299,57 +324,68 @@
 const CONFIG = {
   GAUGE_MAX: 100,          // 不満ゲージ上限（%）
 
-  // 減点量：分割 > 相席 > エリア違い > 待たせすぎ の順
+  // 増加量：分割 > 相席 > エリア違い > 待機 の順
   PENALTY_SPLIT: 14,       // グループを分割して案内
   PENALTY_SHARE: 9,        // 相席（別グループと同じテーブル）
-  PENALTY_AREA:  5,        // 喫煙希望⇔禁煙エリアのミスマッチ
-  WAIT_GRACE_SEC: 12,      // 待機列でこの秒数までは無料
-  WAIT_PENALTY_PER_SEC: 0.35, // 猶予超過後、1組あたり毎秒の増加量
+  PENALTY_AREA:  5,        // 喫煙希望⇔禁煙席のミスマッチ
+  PENALTY_PASS:  2,        // 「待機する」で1ターン送る
 
-  STAY_MIN_SEC: 20,        // 着席後の滞在時間（最短）
-  STAY_MAX_SEC: 60,        // 着席後の滞在時間（最長）
+  STAY_MIN_TURNS: 3,       // 着席後の滞在ターン数（最短）
+  STAY_MAX_TURNS: 8,       // 着席後の滞在ターン数（最長）
 
-  FIRST_SPAWN_DELAY: 1.5,  // ステージ開始から最初の来店までの秒数
-  QUEUE_MAX: 7,            // 待機列がこの組数の間は次の来店を保留
+  SMOKER_RATE: 0.22,       // 喫煙者を含むグループの割合
+  CHILD_RATE:  0.18,       // 子どもを含むグループの割合
 
-  // ステージごとの設定（ステージ番号 n は 1 始まり）
-  stage(n) {
-    return {
-      totalGroups: 8 + n * 2,                            // ステージ1で10組
-      spawnMin: Math.max(3, 10 - n),                     // 来店間隔（秒）
-      spawnMax: Math.max(6, 16 - n),
-      smokerRate: Math.min(0.55, 0.20 + 0.06 * (n - 1)), // 喫煙者を含む確率
-      childRate:  Math.min(0.45, 0.15 + 0.06 * (n - 1)), // 子どもを含む確率
-    };
-  },
+  // 難易度（総組数）
+  DIFFICULTIES: [
+    { key: "easy",   label: "かんたん", groups: 10 },
+    { key: "normal", label: "ふつう",   groups: 25 },
+    { key: "hard",   label: "むずかしい", groups: 50 },
+    { key: "oni",    label: "鬼",       groups: 100 },
+  ],
 };
 
 // グループ識別色（相席の見分け用）
 const GROUP_COLORS = ["#3070d0","#d04030","#309040","#9040b0","#d08020","#158080","#c03080","#607020"];
 
 /* ==============================================================
- * テーブルレイアウト
- *  area: "ns"=禁煙 / "sm"=喫煙   type: "counter"(定員1) / "table"
+ * テーブルレイアウト（ドトール風カフェ）
+ *  area: "ns"=禁煙フロア / "sm"=喫煙ルーム   type: "counter"(定員1) / "table"
+ *  カウンター1人席は計10席（禁煙7＋喫煙ルーム3）
  * ============================================================== */
 const TABLE_LAYOUT = [
-  // カウンター（禁煙側 3席）
-  { id:"c1", type:"counter", cap:1, area:"ns", x: 50, y: 20, w: 46, h: 46 },
-  { id:"c2", type:"counter", cap:1, area:"ns", x:130, y: 20, w: 46, h: 46 },
-  { id:"c3", type:"counter", cap:1, area:"ns", x:210, y: 20, w: 46, h: 46 },
-  // カウンター（喫煙側 3席）
-  { id:"c4", type:"counter", cap:1, area:"sm", x:390, y: 20, w: 46, h: 46 },
-  { id:"c5", type:"counter", cap:1, area:"sm", x:470, y: 20, w: 46, h: 46 },
-  { id:"c6", type:"counter", cap:1, area:"sm", x:550, y: 20, w: 46, h: 46 },
-  // 2人席（各エリア2卓）
-  { id:"t1", type:"table", cap:2, area:"ns", x: 45, y:120, w: 82, h: 62 },
-  { id:"t2", type:"table", cap:2, area:"ns", x:185, y:120, w: 82, h: 62 },
-  { id:"t3", type:"table", cap:2, area:"sm", x:385, y:120, w: 82, h: 62 },
-  { id:"t4", type:"table", cap:2, area:"sm", x:525, y:120, w: 82, h: 62 },
-  // 4人席（各エリア2卓）
-  { id:"t5", type:"table", cap:4, area:"ns", x: 35, y:255, w:114, h: 80 },
-  { id:"t6", type:"table", cap:4, area:"ns", x:175, y:255, w:114, h: 80 },
-  { id:"t7", type:"table", cap:4, area:"sm", x:375, y:255, w:114, h: 80 },
-  { id:"t8", type:"table", cap:4, area:"sm", x:515, y:255, w:114, h: 80 },
+  // 禁煙フロア：カウンター7席（上部横一列）
+  { id:"c1", type:"counter", cap:1, area:"ns", x: 20, y: 22, w: 44, h: 46 },
+  { id:"c2", type:"counter", cap:1, area:"ns", x: 90, y: 22, w: 44, h: 46 },
+  { id:"c3", type:"counter", cap:1, area:"ns", x:160, y: 22, w: 44, h: 46 },
+  { id:"c4", type:"counter", cap:1, area:"ns", x:230, y: 22, w: 44, h: 46 },
+  { id:"c5", type:"counter", cap:1, area:"ns", x:300, y: 22, w: 44, h: 46 },
+  { id:"c6", type:"counter", cap:1, area:"ns", x:370, y: 22, w: 44, h: 46 },
+  { id:"c7", type:"counter", cap:1, area:"ns", x:440, y: 22, w: 44, h: 46 },
+  // 禁煙フロア：2人席 9卓（3列×3行）
+  { id:"t1", type:"table", cap:2, area:"ns", x: 30, y:100, w: 82, h: 54 },
+  { id:"t2", type:"table", cap:2, area:"ns", x:195, y:100, w: 82, h: 54 },
+  { id:"t3", type:"table", cap:2, area:"ns", x:360, y:100, w: 82, h: 54 },
+  { id:"t4", type:"table", cap:2, area:"ns", x: 30, y:182, w: 82, h: 54 },
+  { id:"t5", type:"table", cap:2, area:"ns", x:195, y:182, w: 82, h: 54 },
+  { id:"t6", type:"table", cap:2, area:"ns", x:360, y:182, w: 82, h: 54 },
+  { id:"t7", type:"table", cap:2, area:"ns", x: 30, y:264, w: 82, h: 54 },
+  { id:"t8", type:"table", cap:2, area:"ns", x:195, y:264, w: 82, h: 54 },
+  { id:"t9", type:"table", cap:2, area:"ns", x:360, y:264, w: 82, h: 54 },
+  // 禁煙フロア：4人席 4卓（下段横一列）
+  { id:"t10", type:"table", cap:4, area:"ns", x: 22, y:355, w:100, h: 68 },
+  { id:"t11", type:"table", cap:4, area:"ns", x:146, y:355, w:100, h: 68 },
+  { id:"t12", type:"table", cap:4, area:"ns", x:270, y:355, w:100, h: 68 },
+  { id:"t13", type:"table", cap:4, area:"ns", x:394, y:355, w:100, h: 68 },
+  // 喫煙ルーム：カウンター3席（右壁沿い縦）
+  { id:"c8",  type:"counter", cap:1, area:"sm", x:592, y: 40, w: 44, h: 46 },
+  { id:"c9",  type:"counter", cap:1, area:"sm", x:592, y:110, w: 44, h: 46 },
+  { id:"c10", type:"counter", cap:1, area:"sm", x:592, y:180, w: 44, h: 46 },
+  // 喫煙ルーム：2人席 2卓
+  { id:"t14", type:"table", cap:2, area:"sm", x:540, y:255, w: 82, h: 54 },
+  { id:"t15", type:"table", cap:2, area:"sm", x:540, y:335, w: 82, h: 54 },
+  // 喫煙ルーム：4人席 1卓
+  { id:"t16", type:"table", cap:4, area:"sm", x:532, y:420, w:100, h: 68 },
 ];
 
 /* ==============================================================
@@ -376,9 +412,8 @@ function beep(freq, dur, delay, type, vol) {
   osc.stop(t + dur + 0.02);
 }
 const SFX = {
-  select()  { beep(440, .08); },
-  cancel()  { beep(300, .08); },
   seat()    { beep(660, .09); beep(880, .12, .09); },
+  pass()    { beep(360, .07, 0, "sine", .09); },
   penalty() { beep(220, .12, 0, "sawtooth", .15); beep(160, .18, .10, "sawtooth", .15); },
   leave()   { beep(520, .06, 0, "sine", .06); },
   clear()   { [523, 659, 784, 1046].forEach((f, i) => beep(f, .18, i * .13)); },
@@ -391,21 +426,17 @@ const SFX = {
  * ============================================================== */
 const G = {
   state: "title",      // title / play / result
-  stageNum: 1,
-  stageConf: null,
+  diff: null,          // 選択中の難易度
   gauge: 0,
-  spawned: 0,          // 来店済み組数
+  turn: 0,
   guided: 0,           // 案内完了組数
-  queue: [],           // 待機列のグループ
-  tables: [],          // テーブル状態
-  selected: null,      // 選択中グループ
-  nextSpawnAt: 0,
-  nextGroupId: 1,
-  lastTick: 0,
-  timer: null,
+  lineup: [],          // 全来店グループ（開始時に生成、順番に案内）
+  headIndex: 0,        // 次に案内するグループの添字
+  tables: [],
 };
-const now = () => performance.now() / 1000;
-const rand = (min, max) => min + Math.random() * (max - min);
+const randInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+
+const headGroup = () => (G.headIndex < G.lineup.length ? G.lineup[G.headIndex] : null);
 
 /* ==============================================================
  * DOMヘルパー
@@ -463,68 +494,51 @@ function updateGaugeUI() {
 }
 
 /* ==============================================================
- * グループ生成・待機列
+ * 来店リスト生成・表示
  * ============================================================== */
-function makeGroup() {
-  const conf = G.stageConf;
-  const r = Math.random();
-  const size = r < 0.25 ? 1 : r < 0.60 ? 2 : r < 0.80 ? 3 : 4;
-  let hasChild = size >= 2 && Math.random() < conf.childRate;
-  let hasSmoker = Math.random() < conf.smokerRate;
-  if (hasChild && hasSmoker) hasSmoker = false; // 両立不能な組み合わせは出さない
-  return {
-    id: G.nextGroupId++,
-    size,
-    remaining: size,
-    hasChild,
-    hasSmoker,
-    color: GROUP_COLORS[(G.nextGroupId - 2) % GROUP_COLORS.length],
-    arrivedAt: now(),
-    angry: false,
-  };
+function makeLineup(count) {
+  const lineup = [];
+  for (let i = 0; i < count; i++) {
+    const r = Math.random();
+    const size = r < 0.25 ? 1 : r < 0.60 ? 2 : r < 0.80 ? 3 : 4;
+    let hasChild = size >= 2 && Math.random() < CONFIG.CHILD_RATE;
+    let hasSmoker = Math.random() < CONFIG.SMOKER_RATE;
+    if (hasChild && hasSmoker) hasSmoker = false; // 両立不能な組み合わせは出さない
+    lineup.push({
+      no: i + 1,
+      size,
+      remaining: size,
+      hasChild,
+      hasSmoker,
+      color: GROUP_COLORS[i % GROUP_COLORS.length],
+    });
+  }
+  return lineup;
 }
 
 function renderQueue() {
   const list = $("queue-list");
   list.innerHTML = "";
-  for (const g of G.queue) {
+  for (let i = G.headIndex; i < G.lineup.length; i++) {
+    const g = G.lineup[i];
     const card = document.createElement("div");
-    card.className = "gcard" + (G.selected === g ? " selected" : "") + (g.angry ? " angry" : "");
+    card.className = "gcard" + (i === G.headIndex ? " current" : "");
     let icons = "";
     const adults = g.remaining - (g.hasChild ? 1 : 0);
-    for (let i = 0; i < adults; i++) icons += personSVG(g.color);
+    for (let k = 0; k < adults; k++) icons += personSVG(g.color);
     if (g.hasChild) icons += childSVG(g.color);
     if (g.hasSmoker) icons += smokeSVG();
     card.innerHTML =
+      `<div class="gno">${g.no}</div>` +
       `<div class="badges">` +
         (g.hasSmoker ? `<span class="badge smoke">喫煙</span>` : "") +
         (g.hasChild ? `<span class="badge child">子連れ</span>` : "") +
       `</div>` +
       `<div class="gsize">${g.remaining}名さま${g.remaining < g.size ? "（残り）" : ""}</div>` +
-      `<div class="gicons">${icons}</div>` +
-      `<div class="waitbar-outer"><div class="waitbar-inner" id="wait-${g.id}"></div></div>`;
-    card.addEventListener("click", () => onGroupClick(g));
+      `<div class="gicons">${icons}</div>`;
     list.appendChild(card);
   }
-}
-
-function onGroupClick(g) {
-  if (G.state !== "play") return;
-  if (G.selected === g) {
-    deselect();
-  } else {
-    G.selected = g;
-    SFX.select();
-    renderQueue();
-    updateHighlights();
-  }
-}
-function deselect() {
-  if (!G.selected) return;
-  G.selected = null;
-  SFX.cancel();
-  renderQueue();
-  updateHighlights();
+  $("ui-remain").textContent = G.lineup.length - G.headIndex;
 }
 
 /* ==============================================================
@@ -553,25 +567,23 @@ const tableFree = (t) => t.cap - tableUsed(t);
 function renderTable(t) {
   let html = "";
   if (t.type === "counter") {
-    html += `<div class="cap-label" style="padding-top:4px">1</div>`;
+    if (t.parties.length === 0) html += `<div class="cap-label" style="padding-top:5px">1</div>`;
   } else {
     html += `<div class="cap-label">${t.cap}人席</div>`;
   }
   html += `<div class="occ">`;
   for (const p of t.parties) {
     for (let i = 0; i < p.size; i++) html += personSVG(p.color, true);
+    html += `<span class="remain-chip">あと${p.remain}</span>`;
   }
   html += `</div>`;
-  if (t.parties.length > 0) {
-    html += `<div class="staybar"><i id="stay-${t.id}"></i></div>`;
-  }
   t.el.innerHTML = html;
 }
 
 // 案内可否判定
 function canSeat(group, t) {
   if (group.hasChild && t.area === "sm")
-    return { ok: false, reason: "お子さま連れは喫煙エリアにご案内できません！" };
+    return { ok: false, reason: "お子さま連れは喫煙ルームにご案内できません！" };
   if (group.hasChild && t.type === "counter")
     return { ok: false, reason: "お子さま連れはカウンターにご案内できません！" };
   if (tableFree(t) <= 0)
@@ -580,16 +592,18 @@ function canSeat(group, t) {
 }
 
 function updateHighlights() {
+  const g = headGroup();
   for (const t of G.tables) {
     t.el.classList.remove("ok", "ng");
-    if (!G.selected) continue;
-    t.el.classList.add(canSeat(G.selected, t).ok ? "ok" : "ng");
+    if (!g || G.state !== "play") continue;
+    t.el.classList.add(canSeat(g, t).ok ? "ok" : "ng");
   }
 }
 
 function onTableClick(t) {
-  if (G.state !== "play" || !G.selected) return;
-  const g = G.selected;
+  if (G.state !== "play") return;
+  const g = headGroup();
+  if (!g) return;
   const check = canSeat(g, t);
   if (!check.ok) {
     showToast(check.reason, true);
@@ -605,9 +619,9 @@ function onTableClick(t) {
     addGauge(CONFIG.PENALTY_SHARE, "相席になってしまった…");
     penalized = true;
   }
-  // エリアのミスマッチ（喫煙希望→禁煙 / 禁煙希望→喫煙）
+  // エリアのミスマッチ（喫煙希望→禁煙席 / 禁煙希望→喫煙ルーム）
   if ((g.hasSmoker && t.area === "ns") || (!g.hasSmoker && t.area === "sm")) {
-    addGauge(CONFIG.PENALTY_AREA, g.hasSmoker ? "喫煙希望なのに禁煙席…" : "禁煙希望なのに喫煙席…");
+    addGauge(CONFIG.PENALTY_AREA, g.hasSmoker ? "喫煙希望なのに禁煙席…" : "禁煙希望なのに喫煙ルーム…");
     penalized = true;
   }
   // グループ分割
@@ -617,89 +631,62 @@ function onTableClick(t) {
   }
   if (G.state !== "play") return; // ペナルティでゲームオーバーした場合
 
-  // 着席
+  // 着席（滞在ターン数はランダム）
   t.parties.push({
-    groupId: g.id,
+    groupId: g.no,
     size: n,
     color: g.color,
-    seatedAt: now(),
-    leaveAt: now() + rand(CONFIG.STAY_MIN_SEC, CONFIG.STAY_MAX_SEC),
+    remain: randInt(CONFIG.STAY_MIN_TURNS, CONFIG.STAY_MAX_TURNS),
+    justSeated: true,
   });
   g.remaining -= n;
   renderTable(t);
 
   if (g.remaining <= 0) {
-    G.queue = G.queue.filter((q) => q !== g);
-    G.selected = null;
+    G.headIndex++;
     G.guided++;
     $("ui-guided").textContent = G.guided;
   }
-  renderQueue();
-  updateHighlights();
   if (!penalized) SFX.seat();
 
-  if (G.guided >= G.stageConf.totalGroups) {
-    setTimeout(stageClear, 500);
+  endTurn();
+
+  if (G.state === "play" && G.guided >= G.diff.groups) {
+    setTimeout(gameClear, 450);
   }
 }
 
-/* ==============================================================
- * メインループ
- * ============================================================== */
-function tick() {
+function onPassClick() {
   if (G.state !== "play") return;
-  const t = now();
-  const dt = Math.min(0.5, t - G.lastTick);
-  G.lastTick = t;
+  SFX.pass();
+  addGauge(CONFIG.PENALTY_PASS, "お客さまを待たせて様子見…");
+  if (G.state !== "play") return;
+  endTurn();
+}
 
-  // 来店
-  if (G.spawned < G.stageConf.totalGroups && t >= G.nextSpawnAt) {
-    if (G.queue.length < CONFIG.QUEUE_MAX) {
-      G.queue.push(makeGroup());
-      G.spawned++;
-      renderQueue();
-      G.nextSpawnAt = t + rand(G.stageConf.spawnMin, G.stageConf.spawnMax);
-    } else {
-      G.nextSpawnAt = t + 1; // 列が長すぎる間は保留
-    }
-  }
-
-  // 待機ペナルティ＆待機バー
-  let needQueueRender = false;
-  for (const g of G.queue) {
-    const wait = t - g.arrivedAt;
-    const bar = $("wait-" + g.id);
-    if (bar) bar.style.width = Math.min(100, wait / CONFIG.WAIT_GRACE_SEC * 100) + "%";
-    if (wait > CONFIG.WAIT_GRACE_SEC) {
-      if (!g.angry) { g.angry = true; needQueueRender = true; }
-      G.gauge = Math.min(CONFIG.GAUGE_MAX, G.gauge + CONFIG.WAIT_PENALTY_PER_SEC * dt);
-    }
-  }
-  if (needQueueRender) renderQueue();
-  updateGaugeUI();
-  if (G.gauge >= CONFIG.GAUGE_MAX) { gameOver(); return; }
-
-  // 退店＆滞在バー
-  for (const tb of G.tables) {
+/* ==============================================================
+ * ターン進行：案内・待機のたびに1ターン経過し、滞在ターンを消化
+ * ============================================================== */
+function endTurn() {
+  G.turn++;
+  $("ui-turn").textContent = G.turn;
+  let anyLeft = false;
+  for (const t of G.tables) {
     let changed = false;
-    for (const p of tb.parties) {
-      if (t >= p.leaveAt) changed = true;
+    for (const p of t.parties) {
+      if (p.justSeated) { p.justSeated = false; continue; }
+      p.remain--;
+      if (p.remain <= 0) changed = true;
     }
     if (changed) {
-      tb.parties = tb.parties.filter((p) => t < p.leaveAt);
-      renderTable(tb);
-      updateHighlights();
-      SFX.leave();
-    } else if (tb.parties.length > 0) {
-      const bar = $("stay-" + tb.id);
-      if (bar) {
-        // 最も長く残る客の残り時間を表示
-        const p = tb.parties.reduce((a, b) => (a.leaveAt > b.leaveAt ? a : b));
-        const total = p.leaveAt - p.seatedAt;
-        bar.style.width = Math.max(0, (p.leaveAt - t) / total * 100) + "%";
-      }
+      t.parties = t.parties.filter((p) => p.remain > 0);
+      anyLeft = true;
     }
+    renderTable(t);
   }
+  if (anyLeft) SFX.leave();
+  renderQueue();
+  updateHighlights();
 }
 
 /* ==============================================================
@@ -711,48 +698,43 @@ function showScreen(name) {
   $("screen-result").classList.toggle("hidden", name !== "result");
 }
 
-function startStage(n) {
+function startGame(diff) {
   G.state = "play";
-  G.stageNum = n;
-  G.stageConf = CONFIG.stage(n);
+  G.diff = diff;
   G.gauge = 0;
-  G.spawned = 0;
+  G.turn = 0;
   G.guided = 0;
-  G.queue = [];
-  G.selected = null;
-  G.lastTick = now();
-  G.nextSpawnAt = now() + CONFIG.FIRST_SPAWN_DELAY;
+  G.lineup = makeLineup(diff.groups);
+  G.headIndex = 0;
 
-  $("ui-stage").textContent = n;
+  $("ui-diff").textContent = diff.label;
+  $("ui-turn").textContent = "0";
   $("ui-guided").textContent = "0";
-  $("ui-total").textContent = G.stageConf.totalGroups;
+  $("ui-total").textContent = diff.groups;
   updateGaugeUI();
   buildTables();
   renderQueue();
   updateHighlights();
   showScreen("play");
-  showToast(`ステージ ${n} スタート！ ${G.stageConf.totalGroups}組をご案内！`);
-
-  clearInterval(G.timer);
-  G.timer = setInterval(tick, 100);
+  showToast(`${diff.label}：${diff.groups}組をご案内！`);
 }
 
 function showResult(cleared) {
   G.state = "result";
-  clearInterval(G.timer);
   const title = $("result-title");
-  title.textContent = cleared ? "ステージクリア！" : "ゲームオーバー…";
+  title.textContent = cleared ? "クリア！" : "ゲームオーバー…";
   title.className = cleared ? "clear" : "over";
   $("result-stats").innerHTML =
-    `ステージ ${G.stageNum}<br>` +
-    `ご案内した組数：<b>${G.guided}</b> / ${G.stageConf.totalGroups} 組<br>` +
+    `難易度：${G.diff.label}（${G.diff.groups}組）<br>` +
+    `ご案内した組数：<b>${G.guided}</b> / ${G.diff.groups} 組<br>` +
+    `かかったターン数：<b>${G.turn}</b><br>` +
     `不満ゲージ最終値：<b>${Math.round(G.gauge)}%</b>`;
-  $("btn-result").textContent = cleared ? "次のステージへ" : "もう一度（ステージ1から）";
-  $("btn-result").onclick = () => startStage(cleared ? G.stageNum + 1 : 1);
+  $("btn-result").textContent = cleared ? "もう一度あそぶ" : "リトライ";
+  $("btn-result").onclick = () => startGame(G.diff);
   showScreen("result");
 }
 
-function stageClear() {
+function gameClear() {
   if (G.state !== "play") return;
   SFX.clear();
   showResult(true);
@@ -766,19 +748,17 @@ function gameOver() {
 /* ==============================================================
  * イベント
  * ============================================================== */
-$("btn-start").addEventListener("click", () => { initAudio(); startStage(1); });
-$("btn-cancel").addEventListener("click", deselect);
-$("btn-to-title").addEventListener("click", () => {
-  G.state = "title";
-  clearInterval(G.timer);
-  showScreen("title");
-});
-$("floor").addEventListener("click", (e) => {
-  if (e.target.id === "floor" || e.target.closest("#area-ns, #area-sm")) deselect();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") deselect();
-});
+for (const diff of CONFIG.DIFFICULTIES) {
+  const btn = document.createElement("button");
+  btn.className = "flashbtn";
+  btn.innerHTML = `${diff.label}<small>${diff.groups}組</small>`;
+  btn.addEventListener("click", () => { initAudio(); startGame(diff); });
+  $("diff-btns").appendChild(btn);
+}
+$("btn-pass").addEventListener("click", onPassClick);
+const toTitle = () => { G.state = "title"; showScreen("title"); };
+$("btn-to-title").addEventListener("click", toTitle);
+$("btn-quit").addEventListener("click", toTitle);
 </script>
 </body>
 </html>
