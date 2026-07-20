@@ -255,12 +255,16 @@
   }
   #settings-box h2 { margin:0 0 16px; font-size:24px; letter-spacing:6px; color:#8a5a20; }
   .srow {
-    display:flex; align-items:center; justify-content:space-between;
-    font-size:16px; margin-bottom:12px; padding:0 6px;
+    display:flex; align-items:center; gap:8px;
+    font-size:15px; margin-bottom:14px; padding:0 2px;
   }
-  .srow button.flashbtn { width:80px; font-size:14px; padding:4px 0; letter-spacing:1px; }
-  .srow button.flashbtn.on { background: linear-gradient(#fff0b0, #f0c040 45%, #d8a020 55%, #f0d060); color:#503800; }
-  .srow button.flashbtn.off { color:#999; }
+  .srow .sname { width:64px; text-align:left; }
+  .srow input[type="range"] {
+    flex:1; height:18px; cursor:pointer; accent-color:#d8a020;
+  }
+  .srow .sval {
+    width:44px; text-align:right; font-size:13px; color:#8a5a20; font-weight:bold;
+  }
 
   /* --- リザルト --- */
   #screen-result {
@@ -343,8 +347,16 @@
   <div id="screen-settings" class="screen hidden">
     <div id="settings-box">
       <h2>設定</h2>
-      <div class="srow"><span>BGM</span><button id="tgl-bgm" class="flashbtn"></button></div>
-      <div class="srow"><span>効果音</span><button id="tgl-se" class="flashbtn"></button></div>
+      <div class="srow">
+        <span class="sname">BGM</span>
+        <input type="range" id="vol-bgm" min="0" max="10" step="1">
+        <span class="sval" id="volval-bgm">50%</span>
+      </div>
+      <div class="srow">
+        <span class="sname">効果音</span>
+        <input type="range" id="vol-se" min="0" max="10" step="1">
+        <span class="sval" id="volval-se">50%</span>
+      </div>
       <button id="btn-settings-close" class="flashbtn small" style="margin-top:6px;">閉じる</button>
     </div>
   </div>
@@ -385,7 +397,8 @@ const CONFIG = {
   CHILD_RATE:  0.18,       // 子どもを含むグループの割合
 
   BGM_SRC: "bgm.mp3",      // BGMファイル（index.htmlと同じフォルダに置く）
-  BGM_VOLUME: 0.45,        // BGM音量（0〜1）
+  BGM_MAX_VOLUME: 0.9,     // 音量スライダー最大時のBGM音量（0〜1）
+  SE_BASE_SCALE: 2,        // 音量スライダー最大時の効果音倍率（5=標準の位置で1倍）
 
   // 難易度（総組数）
   DIFFICULTIES: [
@@ -441,14 +454,19 @@ const TABLE_LAYOUT = [
 ];
 
 /* ==============================================================
- * 設定（localStorageに保存）
+ * 設定（音量は0〜10の11段階、localStorageに保存）
  * ============================================================== */
-const SETTINGS = { bgm: true, se: true };
+const SETTINGS = { bgmVol: 5, seVol: 5 };
 try {
-  Object.assign(SETTINGS, JSON.parse(localStorage.getItem("osekiSettings") || "{}"));
+  const saved = JSON.parse(localStorage.getItem("osekiSettings") || "{}");
+  // 旧形式（ON/OFFのみ）からの引き継ぎ
+  if (typeof saved.bgm === "boolean") saved.bgmVol = saved.bgm ? 5 : 0;
+  if (typeof saved.se === "boolean") saved.seVol = saved.se ? 5 : 0;
+  if (Number.isInteger(saved.bgmVol)) SETTINGS.bgmVol = Math.max(0, Math.min(10, saved.bgmVol));
+  if (Number.isInteger(saved.seVol)) SETTINGS.seVol = Math.max(0, Math.min(10, saved.seVol));
 } catch (e) {}
 function saveSettings() {
-  try { localStorage.setItem("osekiSettings", JSON.stringify(SETTINGS)); } catch (e) {}
+  try { localStorage.setItem("osekiSettings", JSON.stringify({ bgmVol: SETTINGS.bgmVol, seVol: SETTINGS.seVol })); } catch (e) {}
 }
 
 /* ==============================================================
@@ -459,10 +477,10 @@ bgmEl.loop = true;
 bgmEl.preload = "auto";
 let userGestured = false; // 自動再生制限対策：初回操作後にのみ再生
 function updateBGM() {
-  if (SETTINGS.bgm && userGestured) {
+  if (SETTINGS.bgmVol > 0 && userGestured) {
     if (!bgmEl.src) bgmEl.src = CONFIG.BGM_SRC;
-    bgmEl.volume = CONFIG.BGM_VOLUME;
-    bgmEl.play().catch(() => {});
+    bgmEl.volume = (SETTINGS.bgmVol / 10) * CONFIG.BGM_MAX_VOLUME;
+    if (bgmEl.paused) bgmEl.play().catch(() => {});
   } else {
     bgmEl.pause();
   }
@@ -482,13 +500,14 @@ function initAudio() {
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 }
 function beep(freq, dur, delay, type, vol) {
-  if (!SETTINGS.se || !audioCtx) return;
+  if (SETTINGS.seVol <= 0 || !audioCtx) return;
   const t = audioCtx.currentTime + (delay || 0);
   const osc = audioCtx.createOscillator();
   const g = audioCtx.createGain();
   osc.type = type || "square";
   osc.frequency.value = freq;
-  g.gain.setValueAtTime(vol || 0.12, t);
+  const seScale = (SETTINGS.seVol / 10) * CONFIG.SE_BASE_SCALE; // スライダー5で1倍
+  g.gain.setValueAtTime(Math.min(0.6, (vol || 0.12) * seScale), t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   osc.connect(g).connect(audioCtx.destination);
   osc.start(t);
@@ -857,21 +876,26 @@ $("btn-quit").addEventListener("click", toTitle);
 
 // ---- 設定モーダル ----
 function renderSettingsUI() {
-  for (const [id, key] of [["tgl-bgm", "bgm"], ["tgl-se", "se"]]) {
-    const btn = $(id);
-    btn.textContent = SETTINGS[key] ? "ON" : "OFF";
-    btn.className = "flashbtn " + (SETTINGS[key] ? "on" : "off");
-  }
+  $("vol-bgm").value = SETTINGS.bgmVol;
+  $("vol-se").value = SETTINGS.seVol;
+  $("volval-bgm").textContent = SETTINGS.bgmVol === 0 ? "OFF" : SETTINGS.bgmVol * 10 + "%";
+  $("volval-se").textContent = SETTINGS.seVol === 0 ? "OFF" : SETTINGS.seVol * 10 + "%";
 }
-function toggleSetting(key) {
-  SETTINGS[key] = !SETTINGS[key];
+$("vol-bgm").addEventListener("input", (e) => {
+  SETTINGS.bgmVol = +e.target.value;
   saveSettings();
   renderSettingsUI();
-  if (key === "bgm") updateBGM();
-  if (key === "se" && SETTINGS.se) { initAudio(); SFX.seat(); } // 確認音
-}
-$("tgl-bgm").addEventListener("click", () => toggleSetting("bgm"));
-$("tgl-se").addEventListener("click", () => toggleSetting("se"));
+  updateBGM(); // 音量は即時反映
+});
+$("vol-se").addEventListener("input", (e) => {
+  SETTINGS.seVol = +e.target.value;
+  saveSettings();
+  renderSettingsUI();
+});
+// スライダーを離したときに効果音の確認音を鳴らす
+$("vol-se").addEventListener("change", () => {
+  if (SETTINGS.seVol > 0) { initAudio(); SFX.seat(); }
+});
 const openSettings = () => { renderSettingsUI(); $("screen-settings").classList.remove("hidden"); };
 $("btn-settings-title").addEventListener("click", openSettings);
 $("btn-settings-play").addEventListener("click", openSettings);
