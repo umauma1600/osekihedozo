@@ -79,10 +79,6 @@
     font-size: 12px; line-height: 1.8; padding: 10px 18px; margin-bottom: 20px;
   }
   #title-help b { color:#ffe680; }
-  #diff-label { font-size:15px; letter-spacing:3px; margin-bottom:10px; color:#ffe0c0; }
-  #diff-btns { display:flex; gap:14px; }
-  #diff-btns .flashbtn { font-size:15px; padding:8px 18px; }
-  #diff-btns .flashbtn small { display:block; font-size:11px; letter-spacing:0; color:#666; }
 
   /* ===== プレイ画面 ===== */
   #topbar {
@@ -95,26 +91,8 @@
   }
   #topbar .stat { white-space:nowrap; }
   #topbar .stat b { color:#ffe080; font-size:16px; }
-  #gauge-box { flex:1; }
-  #gauge-label { font-size:11px; margin-bottom:2px; }
-  #gauge-outer {
-    height: 20px; background:#221510; border:2px inset #997;
-    border-radius: 4px; overflow: hidden; position: relative;
-  }
-  #gauge-inner {
-    height: 100%; width: 0%;
-    background: linear-gradient(#8f8, #4c4);
-    transition: width .25s;
-  }
-  #gauge-inner.mid  { background: linear-gradient(#ffd867, #e0a020); }
-  #gauge-inner.high { background: linear-gradient(#ff8878, #d02010); }
-  #gauge-outer.flash { animation: gaugeflash .4s; }
   @keyframes gaugeflash {
     0%,100% { box-shadow:none; } 50% { box-shadow: 0 0 12px 4px #f44 inset; }
-  }
-  #gauge-text {
-    position:absolute; inset:0; text-align:center; font-size:12px; line-height:20px;
-    color:#fff; text-shadow: 1px 1px 1px #000;
   }
 
   #playarea { position:absolute; top:64px; left:0; right:0; bottom:0; display:flex; }
@@ -130,8 +108,6 @@
   }
   #queue-sub { text-align:center; font-size:10px; color:#775; padding:2px 0; }
   #queue-list { flex:1; overflow-y:auto; padding:6px; }
-  #btn-pass-wrap { padding: 6px; text-align:center; border-top: 2px dashed #a08860; }
-  #btn-pass-wrap .note { font-size:9px; color:#886; margin-top:2px; }
 
   .gcard {
     background:#fffef2; border:2px solid #b0a070; border-radius:6px;
@@ -304,6 +280,45 @@
   #result-box h2.over  { color:#c02010; }
   #result-stats { font-size:15px; line-height:2; margin-bottom:18px; }
   #result-stats b { font-size:19px; color:#a06010; }
+
+  /* ===== おてつき表示（不満ゲージ置き換え） ===== */
+  #mistake-box { flex:1; display:flex; align-items:center; gap:8px; }
+  #mistake-label { font-size:12px; color:#ffe0d0; white-space:nowrap; }
+  #mistake-pips { display:flex; gap:5px; }
+  #mistake-pips .pip {
+    width:16px; height:16px; border-radius:50%;
+    background:#3a2a1e; border:2px solid #7a5a3a; box-sizing:border-box;
+  }
+  #mistake-pips .pip.on {
+    background: radial-gradient(#ff8a70, #d02010);
+    border-color:#ffb0a0; box-shadow:0 0 6px 1px rgba(255,60,30,.7);
+  }
+  #mistake-count { font-size:13px; color:#ffe080; font-weight:bold; white-space:nowrap; }
+  #mistake-box.flash #mistake-pips { animation: gaugeflash .4s; }
+
+  /* ===== 滞在ターン表示（来店カード） ===== */
+  .gcard .gstay { font-size:10px; color:#2a7a8a; margin-top:1px; display:flex; align-items:center; gap:2px; }
+  .gcard.current .gstay { color:#166a7a; font-weight:bold; }
+
+  /* ===== タイトル：コース選択 ===== */
+  #mode-label { font-size:15px; letter-spacing:3px; margin-bottom:10px; color:#ffe0c0; }
+  #course-btns {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+    width:560px; margin-bottom:16px;
+  }
+  #course-btns .flashbtn { font-size:14px; padding:8px 6px; letter-spacing:1px; }
+  #course-btns .flashbtn small { display:block; font-size:10px; letter-spacing:0; color:#666; }
+  #random-wrap { text-align:center; }
+  #btn-random {
+    background: linear-gradient(#ffd0b0, #e07030 45%, #c04010 55%, #e07838);
+    color:#fff; border-color:#a03010; letter-spacing:3px;
+  }
+  #btn-random:hover { background: linear-gradient(#ffe0c0, #f08040 45%, #d05020 55%, #f08848); }
+  #random-wrap .rnote { font-size:10px; color:#ffd0b0; margin-top:4px; }
+
+  /* ===== リザルト：★評価 ===== */
+  .stars { font-size:40px; letter-spacing:6px; color:#f0c020; margin-bottom:6px; text-shadow:2px 2px 0 rgba(0,0,0,.2); }
+  .perfect { font-size:15px; color:#e05010; font-weight:bold; margin-bottom:8px; }
 </style>
 </head>
 <body>
@@ -316,15 +331,19 @@
     <h1>お席へどうぞ！</h1>
     <h2>〜 カフェ案内係 〜</h2>
     <div id="title-help">
-      あなたはカフェの案内係。来店リストのお客さまを、上から順番に席へご案内するターン制パズル！<br>
-      ・案内（または待機）するたびに<b>1ターン</b>経過。お客さまは数ターン滞在して退店します。<br>
+      あなたはカフェの案内係。来店リストのお客さまを、上から順番に席へご案内する“詰将棋型”パズル！<br>
+      ・先頭のお客さまをご案内するたび<b>1ターン</b>経過。各組の<b>滞在ターン</b>は最初から見えています。<br>
       ・<b>タバコ</b>マークのグループは<b>喫煙ルーム</b>希望、それ以外は<b>禁煙席</b>希望。<br>
       ・<b>子ども連れ</b>は喫煙ルームとカウンターにはご案内できません。<br>
-      ・<b>不満ゲージ</b>の増加量：グループ分割 ＞ 相席 ＞ エリア違い ＞ 待機。満タンでゲームオーバー！<br>
-      ・全組をご案内しきればクリア。じっくり考えて最善の席割りを見つけよう。
+      ・<b>分割・相席・エリア違い</b>はすべて「<b>おてつき</b>」。<b>5回でゲームオーバー</b>！<br>
+      ・目指すは<b>ノーミス＝★★★</b>。「決められたコース」は必ずノーミスで解けます。
     </div>
-    <div id="diff-label">― 難易度をえらんでスタート ―</div>
-    <div id="diff-btns"></div>
+    <div id="mode-label">― コースをえらんでスタート ―</div>
+    <div id="course-btns"></div>
+    <div id="random-wrap">
+      <button id="btn-random" class="flashbtn">ランダム〈鬼〉</button>
+      <div class="rnote">本当にランダム。ノーミスできるかは運と実力しだい！</div>
+    </div>
     <button id="btn-settings-title" class="flashbtn small">⚙ 設定</button>
   </div>
 
@@ -334,12 +353,10 @@
       <div class="stat" id="ui-diff">かんたん</div>
       <div class="stat">ターン <b id="ui-turn">0</b></div>
       <div class="stat">案内 <b id="ui-guided">0</b>/<span id="ui-total">10</span> 組</div>
-      <div id="gauge-box">
-        <div id="gauge-label">お客さまの不満ゲージ</div>
-        <div id="gauge-outer">
-          <div id="gauge-inner"></div>
-          <div id="gauge-text">0%</div>
-        </div>
+      <div id="mistake-box">
+        <span id="mistake-label">おてつき</span>
+        <span id="mistake-pips"></span>
+        <span id="mistake-count">0 / 5</span>
       </div>
       <button id="btn-settings-play" class="flashbtn small">⚙</button>
       <button id="btn-quit" class="flashbtn small">タイトルへ</button>
@@ -350,10 +367,6 @@
         <div id="queue-sub">残り <span id="ui-remain">0</span> 組</div>
         <div id="queue-list"></div>
         <div id="legend"></div>
-        <div id="btn-pass-wrap">
-          <button id="btn-pass" class="flashbtn small">待機する</button>
-          <div class="note">1ターン経過（不満 +2）</div>
-        </div>
       </div>
       <div id="floor">
         <div id="area-ns"><div class="area-label">禁 煙 席</div></div>
@@ -410,31 +423,37 @@
  * ゲームバランス定数（調整はここ）
  * ============================================================== */
 const CONFIG = {
-  GAUGE_MAX: 100,          // 不満ゲージ上限（%）
-
-  // 増加量：分割 > 相席 > エリア違い > 待機 の順
-  PENALTY_SPLIT: 14,       // グループを分割して案内
-  PENALTY_SHARE: 9,        // 相席（別グループと同じテーブル）
-  PENALTY_AREA:  5,        // 喫煙希望⇔禁煙席のミスマッチ
-  PENALTY_PASS:  2,        // 「待機する」で1ターン送る
-
-  STAY_MIN_TURNS: 3,       // 着席後の滞在ターン数（最短）
-  STAY_MAX_TURNS: 8,       // 着席後の滞在ターン数（最長）
-
-  SMOKER_RATE: 0.22,       // 喫煙者を含むグループの割合
-  CHILD_RATE:  0.18,       // 子どもを含むグループの割合
+  // 詰将棋型パズル：ミスは「おてつき」として離散カウント（分割・相席・エリア違いは一律1）。
+  // 上限に達したらゲームオーバー（本家準拠の少数枠）。目標はノーミス（★★★）。
+  MISTAKE_MAX: 5,
 
   BGM_SRC: "bgm.mp3",      // BGMファイル（index.htmlと同じフォルダに置く）
   BGM_MAX_VOLUME: 0.9,     // 音量スライダー最大時のBGM音量（0〜1）
   SE_BASE_SCALE: 2,        // 音量スライダー最大時の効果音倍率（5=標準の位置で1倍）
 
-  // 難易度（総組数）
-  DIFFICULTIES: [
-    { key: "easy",   label: "かんたん", groups: 10 },
-    { key: "normal", label: "ふつう",   groups: 25 },
-    { key: "hard",   label: "むずかしい", groups: 50 },
-    { key: "oni",    label: "鬼",       groups: 100 },
+  // 【決められたコース】ノーミス解が必ず存在する手作りステージ。
+  //  「正しい席割り」をシミュレートし、その来店順を書き出す“解からの逆生成”。
+  //  seed 固定なので毎回まったく同じ配置。難易度カーブは主にこちらで表現する。
+  //   groups=総組数 / stayMin,stayMax=滞在ターン範囲 /
+  //   wBig=4人席を選ぶ重み / wSmoke=喫煙ルームを選ぶ重み /
+  //   childRate=子連れ化する確率 / fill=席の定員いっぱいに埋める確率
+  COURSES: [
+    { label: "開店準備",       seed: 1101, groups: 8,  stayMin: 3, stayMax: 5, wBig: 1.0, wSmoke: 0.6, childRate: 0.15, fill: 0.35 },
+    { label: "昼の混みぐあい",  seed: 2027, groups: 13, stayMin: 3, stayMax: 6, wBig: 1.4, wSmoke: 0.9, childRate: 0.22, fill: 0.50 },
+    { label: "4人席のやりくり", seed: 3313, groups: 16, stayMin: 4, stayMax: 7, wBig: 3.2, wSmoke: 0.7, childRate: 0.18, fill: 0.85 },
+    { label: "喫煙ルーム満員",  seed: 4402, groups: 18, stayMin: 4, stayMax: 7, wBig: 1.6, wSmoke: 3.0, childRate: 0.12, fill: 0.60 },
+    { label: "子連れラッシュ",  seed: 5551, groups: 20, stayMin: 4, stayMax: 7, wBig: 2.0, wSmoke: 0.5, childRate: 0.50, fill: 0.70 },
+    { label: "大混雑",         seed: 6640, groups: 24, stayMin: 5, stayMax: 8, wBig: 2.6, wSmoke: 1.6, childRate: 0.30, fill: 0.85 },
   ],
+
+  // 【ランダム〈鬼〉】本当にランダム生成。ノーミス解は保証しない、最高難度の腕試し。
+  ONI: {
+    groups: 100,
+    stayMin: 4, stayMax: 9,
+    sizeWeights: [0.15, 0.30, 0.25, 0.30], // 1名/2名/3名/4名の出現比
+    smokerRate: 0.35,
+    childRate: 0.28,
+  },
 };
 
 // 属性ベースの統一カラー（グループ全員が同じ色：一般＝黒 / 子連れ＝緑 / 喫煙＝赤）
@@ -621,8 +640,9 @@ const SFX = {
  * ============================================================== */
 const G = {
   state: "title",      // title / play / result
-  diff: null,          // 選択中の難易度
-  gauge: 0,
+  scenario: null,      // 選択中のシナリオ（コース or ランダム）
+  total: 0,            // 総組数
+  mistakes: 0,         // 「おてつき」回数
   turn: 0,
   guided: 0,           // 案内完了組数
   lineup: [],          // 全来店グループ（開始時に生成、順番に案内）
@@ -675,49 +695,110 @@ function showToast(text, warn) {
 }
 
 /* ==============================================================
- * 不満ゲージ
+ * おてつき（ミス）カウント
  * ============================================================== */
-function addGauge(amount, reason) {
+function addMistake(reason) {
   if (G.state !== "play") return;
-  G.gauge = Math.min(CONFIG.GAUGE_MAX, G.gauge + amount);
-  updateGaugeUI();
-  if (reason) {
-    showToast(`不満 +${amount}　${reason}`, true);
-    SFX.penalty();
-    const outer = $("gauge-outer");
-    outer.classList.remove("flash");
-    void outer.offsetWidth; // アニメ再始動
-    outer.classList.add("flash");
-  }
-  if (G.gauge >= CONFIG.GAUGE_MAX) gameOver();
+  G.mistakes++;
+  updateMistakeUI();
+  showToast(`おてつき！　${reason}`, true);
+  SFX.penalty();
+  const box = $("mistake-box");
+  box.classList.remove("flash");
+  void box.offsetWidth; // アニメ再始動
+  box.classList.add("flash");
+  if (G.mistakes >= CONFIG.MISTAKE_MAX) gameOver();
 }
-function updateGaugeUI() {
-  const pct = Math.round(G.gauge / CONFIG.GAUGE_MAX * 100);
-  const inner = $("gauge-inner");
-  inner.style.width = pct + "%";
-  inner.className = pct >= 75 ? "high" : pct >= 45 ? "mid" : "";
-  $("gauge-text").textContent = pct + "%";
+function updateMistakeUI() {
+  let pips = "";
+  for (let i = 0; i < CONFIG.MISTAKE_MAX; i++)
+    pips += `<span class="pip${i < G.mistakes ? " on" : ""}"></span>`;
+  $("mistake-pips").innerHTML = pips;
+  $("mistake-count").textContent = `${G.mistakes} / ${CONFIG.MISTAKE_MAX}`;
 }
 
 /* ==============================================================
- * 来店リスト生成・表示
+ * 来店リスト生成
+ *  - コース：解から逆生成（ノーミス解の存在を保証）
+ *  - ランダム〈鬼〉：本当にランダム（保証なし）
  * ============================================================== */
-function makeLineup(count) {
+// 1組を作る共通ヘルパ（両立不能な組み合わせをここで正規化）
+function makeGroup(no, size, hasChild, hasSmoker, stay) {
+  if (hasChild && size < 2) hasChild = false;
+  if (hasChild && hasSmoker) hasSmoker = false; // 子連れ＋喫煙は出さない
+  return { no, size, remaining: size, hasChild, hasSmoker, stay, childPlaced: false };
+}
+
+// 決定的な擬似乱数（seed固定でコースを毎回同一に）
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function pickWeighted(arr, weights, rnd) {
+  let sum = 0;
+  for (const w of weights) sum += w;
+  let r = rnd() * sum;
+  for (let i = 0; i < arr.length; i++) { r -= weights[i]; if (r <= 0) return arr[i]; }
+  return arr[arr.length - 1];
+}
+
+// 【コース】空いている互換テーブルへ順に「正しく」着席させ、その来店順を書き出す。
+// 生成に使った手順そのものがノーミス解になるので、必ず解ける。
+// ターン消化のタイミングはゲーム本編の endTurn と同一（着席直後のターンは減らさない）。
+function buildCourseLineup(c) {
+  const rnd = mulberry32(c.seed);
+  const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const tbls = TABLE_LAYOUT.map((d) => ({ cap: d.cap, area: d.area, type: d.type, party: null }));
   const lineup = [];
-  for (let i = 0; i < count; i++) {
-    const r = Math.random();
-    const size = r < 0.25 ? 1 : r < 0.60 ? 2 : r < 0.80 ? 3 : 4;
-    let hasChild = size >= 2 && Math.random() < CONFIG.CHILD_RATE;
-    let hasSmoker = Math.random() < CONFIG.SMOKER_RATE;
-    if (hasChild && hasSmoker) hasSmoker = false; // 両立不能な組み合わせは出さない
-    lineup.push({
-      no: i + 1,
-      size,
-      remaining: size,
-      hasChild,
-      hasSmoker,
-      childPlaced: false,
+
+  for (let i = 0; i < c.groups; i++) {
+    // いま空いている席を重み付けで1つ選ぶ（4人席・喫煙室を優先すると難度が上がる）
+    const empties = tbls.filter((t) => !t.party);
+    const pool = empties.length ? empties : tbls; // 空席が尽きる状況は起きない前提の安全網
+    const weights = pool.map((t) => {
+      let w = 1;
+      if (t.cap === 4) w *= c.wBig;
+      if (t.area === "sm") w *= c.wSmoke;
+      return w;
     });
+    const t = pickWeighted(pool, weights, rnd);
+
+    // その席にぴったり座れる組を逆算で作る
+    const size = t.type === "counter" ? 1 : (rnd() < c.fill ? t.cap : ri(1, t.cap));
+    const hasSmoker = t.area === "sm";
+    const hasChild = t.area === "ns" && t.type === "table" && size >= 2 && rnd() < c.childRate;
+    const stay = ri(c.stayMin, c.stayMax);
+    lineup.push(makeGroup(lineup.length + 1, size, hasChild, hasSmoker, stay));
+
+    // 着席させて1ターン進める
+    t.party = { remain: stay, justSeated: true };
+    for (const tt of tbls) {
+      if (!tt.party) continue;
+      if (tt.party.justSeated) { tt.party.justSeated = false; continue; }
+      tt.party.remain--;
+      if (tt.party.remain <= 0) tt.party = null;
+    }
+  }
+  return lineup;
+}
+
+// 【ランダム〈鬼〉】本当にランダム。ノーミス解は保証しない。
+function buildRandomLineup(o) {
+  const lineup = [];
+  const sw = o.sizeWeights;
+  const swSum = sw[0] + sw[1] + sw[2] + sw[3];
+  for (let i = 0; i < o.groups; i++) {
+    let r = Math.random() * swSum, size = 4;
+    for (let s = 0; s < 4; s++) { r -= sw[s]; if (r <= 0) { size = s + 1; break; } }
+    const hasChild = size >= 2 && Math.random() < o.childRate;
+    const hasSmoker = Math.random() < o.smokerRate;
+    const stay = randInt(o.stayMin, o.stayMax);
+    lineup.push(makeGroup(lineup.length + 1, size, hasChild, hasSmoker, stay));
   }
   return lineup;
 }
@@ -741,6 +822,7 @@ function renderQueue() {
         (g.hasChild ? `<span class="badge child">子連れ</span>` : "") +
       `</div>` +
       `<div class="gsize">${g.remaining}名さま${g.remaining < g.size ? "（残り）" : ""}</div>` +
+      `<div class="gstay">${iconSVG("hourglass", 9)} 滞在${g.stay}ターン</div>` +
       `<div class="gicons">${icons}</div>`;
     list.appendChild(card);
   }
@@ -838,22 +920,22 @@ function onTableClick(t) {
 
   // 相席（カウンターは定員1なので発生しない）
   if (t.parties.length > 0) {
-    addGauge(CONFIG.PENALTY_SHARE, "相席になってしまった…");
+    addMistake("相席になってしまった…");
     penalized = true;
   }
   // エリアのミスマッチ（喫煙希望→禁煙席 / 禁煙希望→喫煙ルーム）
   if ((g.hasSmoker && t.area === "ns") || (!g.hasSmoker && t.area === "sm")) {
-    addGauge(CONFIG.PENALTY_AREA, g.hasSmoker ? "喫煙希望なのに禁煙席…" : "禁煙希望なのに喫煙ルーム…");
+    addMistake(g.hasSmoker ? "喫煙希望なのに禁煙席へ…" : "禁煙希望なのに喫煙ルームへ…");
     penalized = true;
   }
   // グループ分割
   if (n < g.remaining) {
-    addGauge(CONFIG.PENALTY_SPLIT, "グループがバラバラに…");
+    addMistake("グループがバラバラに…");
     penalized = true;
   }
-  if (G.state !== "play") return; // ペナルティでゲームオーバーした場合
+  if (G.state !== "play") return; // おてつき上限でゲームオーバーした場合
 
-  // 着席（滞在ターン数はランダム）。子どもは最初に着席する一団に含める
+  // 着席（滞在ターンは各組の固定属性）。子どもは最初に着席する一団に含める
   const withChild = g.hasChild && !g.childPlaced && t.area !== "sm" && t.type !== "counter";
   if (withChild) g.childPlaced = true;
   t.parties.push({
@@ -862,7 +944,7 @@ function onTableClick(t) {
     hasSmoker: g.hasSmoker,
     childGroup: g.hasChild,
     hasChild: withChild,
-    remain: randInt(CONFIG.STAY_MIN_TURNS, CONFIG.STAY_MAX_TURNS),
+    remain: g.stay,
     justSeated: true,
   });
   g.remaining -= n;
@@ -877,21 +959,13 @@ function onTableClick(t) {
 
   endTurn();
 
-  if (G.state === "play" && G.guided >= G.diff.groups) {
+  if (G.state === "play" && G.guided >= G.total) {
     setTimeout(gameClear, 450);
   }
 }
 
-function onPassClick() {
-  if (G.state !== "play") return;
-  SFX.pass();
-  addGauge(CONFIG.PENALTY_PASS, "お客さまを待たせて様子見…");
-  if (G.state !== "play") return;
-  endTurn();
-}
-
 /* ==============================================================
- * ターン進行：案内・待機のたびに1ターン経過し、滞在ターンを消化
+ * ターン進行：案内のたびに1ターン経過し、滞在ターンを消化
  * ============================================================== */
 function endTurn() {
   G.turn++;
@@ -924,39 +998,49 @@ function showScreen(name) {
   $("screen-result").classList.toggle("hidden", name !== "result");
 }
 
-function startGame(diff) {
+// シナリオ = { label, build: () => lineup配列 }
+function startScenario(scn) {
   G.state = "play";
-  G.diff = diff;
-  G.gauge = 0;
+  G.scenario = scn;
+  G.mistakes = 0;
   G.turn = 0;
   G.guided = 0;
-  G.lineup = makeLineup(diff.groups);
+  G.lineup = scn.build();
+  G.total = G.lineup.length;
   G.headIndex = 0;
 
-  $("ui-diff").textContent = diff.label;
+  $("ui-diff").textContent = scn.label;
   $("ui-turn").textContent = "0";
   $("ui-guided").textContent = "0";
-  $("ui-total").textContent = diff.groups;
-  updateGaugeUI();
+  $("ui-total").textContent = G.total;
+  updateMistakeUI();
   buildTables();
   renderQueue();
   updateHighlights();
   showScreen("play");
-  showToast(`${diff.label}：${diff.groups}組をご案内！`);
+  showToast(`${scn.label}：${G.total}組をご案内！`);
 }
+
+function starsFor(m) { return m === 0 ? 3 : m <= 2 ? 2 : 1; }
 
 function showResult(cleared) {
   G.state = "result";
   const title = $("result-title");
   title.textContent = cleared ? "クリア！" : "ゲームオーバー…";
   title.className = cleared ? "clear" : "over";
+  const stars = cleared ? starsFor(G.mistakes) : 0;
+  const starStr = cleared
+    ? `<div class="stars">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</div>` +
+      (stars === 3 ? `<div class="perfect">パーフェクト！ ノーミス達成</div>` : "")
+    : "";
   $("result-stats").innerHTML =
-    `難易度：${G.diff.label}（${G.diff.groups}組）<br>` +
-    `ご案内した組数：<b>${G.guided}</b> / ${G.diff.groups} 組<br>` +
+    starStr +
+    `コース：${G.scenario.label}（${G.total}組）<br>` +
+    `ご案内した組数：<b>${G.guided}</b> / ${G.total} 組<br>` +
     `かかったターン数：<b>${G.turn}</b><br>` +
-    `不満ゲージ最終値：<b>${Math.round(G.gauge)}%</b>`;
+    `おてつき：<b>${G.mistakes}</b> 回`;
   $("btn-result").textContent = cleared ? "もう一度あそぶ" : "リトライ";
-  $("btn-result").onclick = () => startGame(G.diff);
+  $("btn-result").onclick = () => startScenario(G.scenario);
   showScreen("result");
 }
 
@@ -974,13 +1058,22 @@ function gameOver() {
 /* ==============================================================
  * イベント
  * ============================================================== */
-for (const diff of CONFIG.DIFFICULTIES) {
+// 決められたコース
+for (const c of CONFIG.COURSES) {
   const btn = document.createElement("button");
   btn.className = "flashbtn";
-  btn.innerHTML = `${diff.label}<small>${diff.groups}組</small>`;
-  btn.addEventListener("click", () => { initAudio(); startGame(diff); });
-  $("diff-btns").appendChild(btn);
+  btn.innerHTML = `${c.label}<small>${c.groups}組</small>`;
+  btn.addEventListener("click", () => {
+    initAudio();
+    startScenario({ label: c.label, build: () => buildCourseLineup(c) });
+  });
+  $("course-btns").appendChild(btn);
 }
+// ランダム〈鬼〉：本当にランダム、ノーミス保証なし
+$("btn-random").addEventListener("click", () => {
+  initAudio();
+  startScenario({ label: "ランダム〈鬼〉", build: () => buildRandomLineup(CONFIG.ONI) });
+});
 $("legend").innerHTML =
   `<span class="li">${personSVG(COLORS.normal, true)}一般</span>` +
   `<span class="li">${personSVG(COLORS.child, true)}子連れ</span>` +
@@ -989,12 +1082,10 @@ $("legend").innerHTML =
 // ---- ICOOON MONO アイコンをUIへ適用 ----
 $("btn-settings-title").innerHTML = `${iconSVG("gear", 13)} 設定`;
 $("btn-settings-play").innerHTML = iconSVG("gear", 14);
-$("btn-pass").innerHTML = `${iconSVG("hourglass", 12)} 待機する`;
 document.querySelector("#area-ns .area-label").innerHTML = `${iconSVG("nosmoke", 18)} 禁 煙 席`;
 document.querySelector("#smoke-room .room-label").innerHTML = `${iconSVG("smoke", 16)} 喫煙ルーム`;
 document.querySelector("#vol-bgm").previousElementSibling.innerHTML = `${iconSVG("note", 15)} BGM`;
 document.querySelector("#vol-se").previousElementSibling.innerHTML = `${iconSVG("speaker", 15)} 効果音`;
-$("btn-pass").addEventListener("click", onPassClick);
 const toTitle = () => { G.state = "title"; showScreen("title"); };
 $("btn-to-title").addEventListener("click", toTitle);
 $("btn-quit").addEventListener("click", toTitle);
