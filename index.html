@@ -448,14 +448,15 @@ const CONFIG = {
   //   wBig=4人席を選ぶ重み / wSmoke=喫煙ルームを選ぶ重み /
   //   childRate=子連れ化する確率 / fill=席の定員いっぱいに埋める確率 /
   //   open=開放する席数（nsC/ns2/ns4=禁煙のカウンター/2人席/4人席、smC/sm2/sm4=喫煙）
-  //  各コースは smallest-fit（素直な良手）でも詰まないよう調整済み（要先読み）。
+  //  難易度は「解に必要なビーム幅（＝同時に読むべき手数）」で調整。B≈1→4→8→16→32→64。
+  //  浅い先読みでは詰まず、後半ほど深い読みが要る（smallest-fit等の素直な良手では★★★を逃す）。
   COURSES: [
-    { label: "開店準備",     seed: 1,  groups: 12, stayMin: 3, stayMax: 5, wBig: 1.0, wSmoke: 0.8, childRate: 0.15, fill: 0.40, open: { nsC: 2, ns2: 4, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
-    { label: "昼の常連",     seed: 60, groups: 14, stayMin: 3, stayMax: 6, wBig: 1.6, wSmoke: 1.0, childRate: 0.20, fill: 0.60, open: { nsC: 1, ns2: 3, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
-    { label: "四人席の攻防", seed: 10, groups: 16, stayMin: 4, stayMax: 6, wBig: 2.6, wSmoke: 0.6, childRate: 0.20, fill: 0.80, open: { nsC: 1, ns2: 2, ns4: 3, smC: 1, sm2: 1, sm4: 0 } },
-    { label: "喫煙室ぎりぎり", seed: 9,  groups: 16, stayMin: 4, stayMax: 6, wBig: 1.4, wSmoke: 2.4, childRate: 0.12, fill: 0.60, open: { nsC: 1, ns2: 2, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
-    { label: "満席まぎわ",   seed: 32, groups: 18, stayMin: 4, stayMax: 6, wBig: 2.2, wSmoke: 1.4, childRate: 0.28, fill: 0.75, open: { nsC: 1, ns2: 2, ns4: 2, smC: 1, sm2: 1, sm4: 1 } },
-    { label: "大詰め",       seed: 34, groups: 20, stayMin: 4, stayMax: 6, wBig: 2.6, wSmoke: 1.2, childRate: 0.25, fill: 0.80, open: { nsC: 1, ns2: 2, ns4: 3, smC: 0, sm2: 1, sm4: 1 } },
+    { label: "開店準備",     seed: 1,    groups: 12, stayMin: 3, stayMax: 5,  wBig: 1.0, wSmoke: 0.8, childRate: 0.15, fill: 0.40, open: { nsC: 2, ns2: 4, ns4: 2, smC: 1, sm2: 1, sm4: 1 } }, // B≈1
+    { label: "昼の常連",     seed: 34,   groups: 15, stayMin: 4, stayMax: 7,  wBig: 1.6, wSmoke: 1.0, childRate: 0.20, fill: 0.60, open: { nsC: 1, ns2: 3, ns4: 2, smC: 1, sm2: 1, sm4: 1 } }, // B≈4
+    { label: "四人席の攻防", seed: 164,  groups: 18, stayMin: 5, stayMax: 9,  wBig: 2.6, wSmoke: 0.6, childRate: 0.20, fill: 0.80, open: { nsC: 1, ns2: 2, ns4: 3, smC: 1, sm2: 1, sm4: 0 } }, // B≈8
+    { label: "喫煙室ぎりぎり", seed: 61,   groups: 19, stayMin: 5, stayMax: 9,  wBig: 1.4, wSmoke: 2.4, childRate: 0.12, fill: 0.60, open: { nsC: 1, ns2: 2, ns4: 2, smC: 1, sm2: 1, sm4: 1 } }, // B≈16
+    { label: "満席まぎわ",   seed: 5,    groups: 21, stayMin: 6, stayMax: 9,  wBig: 2.2, wSmoke: 1.4, childRate: 0.28, fill: 0.80, open: { nsC: 1, ns2: 3, ns4: 2, smC: 1, sm2: 1, sm4: 1 } }, // B≈32
+    { label: "大詰め",       seed: 1676, groups: 23, stayMin: 6, stayMax: 10, wBig: 2.6, wSmoke: 1.6, childRate: 0.25, fill: 0.85, open: { nsC: 1, ns2: 2, ns4: 3, smC: 1, sm2: 1, sm4: 1 } }, // B≈64
   ],
 
   // 【ランダム〈鬼〉】本当にランダム生成。ノーミス解は保証しない、最高難度の腕試し。
